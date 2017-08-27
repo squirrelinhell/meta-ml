@@ -1,5 +1,5 @@
 
-class World:
+class Problem:
     def get_input_shape(self):
         # returns a tuple of int
         raise NotImplementedError("get_input_shape")
@@ -13,8 +13,8 @@ class World:
         raise NotImplementedError("start_episode")
 
 class Episode:
-    def get_input_batch(self):
-        # returns ndarray with shape (N,) + get_input_shape()
+    def get_input_batch(self, batch_size):
+        # returns ndarray with shape (batch_size,) + get_input_shape()
         raise NotImplementedError("get_input_batch")
 
     def get_reward_batch(self, output_batch):
@@ -26,3 +26,4 @@ class Episode:
         raise NotImplementedError("get_reward_gradient")
 
 from .Gym import Gym
+from .Mnist import Mnist

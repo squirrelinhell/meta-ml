@@ -5,10 +5,10 @@ import numpy as np
 import mandalka
 import threading
 
-from . import World, Episode
+from . import Problem, Episode
 
 @mandalka.node
-class Gym(World):
+class Gym(Problem):
     def __init__(self, env_name):
         envs = [gym.make(str(env_name))]
         lock = threading.Lock()
@@ -62,9 +62,10 @@ class GymEpisode(Episode):
     def __init__(self, env, on_end, process_obs, process_output):
         obs = env.reset()
 
-        def get_input_batch():
+        def get_input_batch(batch_size=1):
             if env is None:
                 return None
+            assert batch_size == 1
             return np.array([process_obs(obs)])
 
         def get_reward_batch(output_batch):
@@ -82,5 +83,3 @@ class GymEpisode(Episode):
 
         self.get_input_batch = get_input_batch
         self.get_reward_batch = get_reward_batch
-
-        self.start_episode = lambda: GymEpisode()

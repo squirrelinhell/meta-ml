@@ -2,7 +2,7 @@
 import mandalka
 
 class Model:
-    #def __init__(self, world, seed, ...)
+    #def __init__(self, problem, seed, ...)
     #    pass
 
     def predict_batch(self, inputs):
@@ -14,9 +14,9 @@ class ModelFactory:
         self.model_class = model_class
         self.params = params
 
-    def fit(self, world, seed):
+    def fit(self, problem, seed):
         return globals()[self.model_class](
-            world=world,
+            problem=problem,
             seed=seed,
             **self.params
         )

@@ -6,10 +6,10 @@ from . import Model
 
 @mandalka.node
 class Random(Model):
-    def __init__(self, world, seed):
+    def __init__(self, problem, seed):
         rng = np.random.RandomState(seed=seed)
 
         self.predict_batch = lambda input_batch: rng.randn(
             len(input_batch),
-            *world.get_output_shape()
+            *problem.get_output_shape()
         )
