@@ -6,10 +6,10 @@ import mandalka
 from . import Problem, SupervisedEpisode
 
 class Table(Problem):
-    def build(self, *args, **kwargs): # -> (inputs, outputs)
-        raise NotImplementedError("build")
+    def _build(self, **kwargs): # -> (inputs, outputs)
+        raise NotImplementedError("_build")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         path = ("__cache__/" + self.__class__.__name__.lower()
             + "_" + mandalka.unique_id(self))
 
@@ -18,7 +18,7 @@ class Table(Problem):
             outputs = np.load(path + "/outputs.npy")
         else:
             os.makedirs(path + ".tmp", exist_ok=True)
-            inputs, outputs = self.build(*args, **kwargs)
+            inputs, outputs = self._build(**kwargs)
             inputs = np.clip(inputs, -1.0, 1.0)
             outputs = np.clip(outputs, -1.0, 1.0)
             assert len(inputs) == len(outputs)

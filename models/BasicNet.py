@@ -3,7 +3,7 @@ import mandalka
 import numpy as np
 import tensorflow as tf
 
-from . import Model
+from .TFModel import TFModel
 
 def affine(x, out_dim):
     assert len(x.shape.as_list()) == 2
@@ -22,8 +22,8 @@ def affine(x, out_dim):
     return tf.matmul(x, w) + b
 
 @mandalka.node
-class BasicNet(Model):
-    def build(self, problem, inp,
+class BasicNet(TFModel):
+    def _build_layers(self, problem, inp,
             hidden_layers=[100, 100]):
         layer = tf.reshape(
             inp,
@@ -41,14 +41,14 @@ class BasicNet(Model):
             (-1,) + problem.output_shape
         )
 
-    def __init__(self, problem, seed,
+    def _build_session(self, problem,
             episodes=10,
             batch_size=512,
             lr=0.01,
             eps=0.0001,
             **kwargs):
-        inp = tf.placeholder(tf.float32, (None,) + problem.input_shape)
-        out = self.build(problem, inp, **kwargs)
+        inp = tf.placeholder(tf.float32, (None,) + problem.input_shape, name="inp")
+        out = tf.identity(self._build_layers(problem, inp, **kwargs), name="out")
 
         # Backpropagation
         grad_in = tf.placeholder(tf.float32, (None,) + problem.output_shape)
@@ -87,7 +87,11 @@ class BasicNet(Model):
                 )
             print("Mean episode reward: %.5f" % np.mean(ep_rewards))
 
-        self.predict = lambda i: sess.run(
-            out,
-            feed_dict={inp: [i]}
+        return sess
+
+    def predict(self, inp):
+        sess = self.get_session()
+        return sess.run(
+            sess.out,
+            feed_dict={sess.inp: [inp]}
         )[0]

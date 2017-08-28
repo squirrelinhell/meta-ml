@@ -7,12 +7,12 @@ from models import Random, BasicNet
 from problems import Gym, Mnist, CrossEntropy, Accuracy
 import debug
 
-def run_episode(world, model):
+def run_episode(world, model, max_steps=-1):
     episode = world.start_episode()
     steps = 0
 
     reward_sum = 0.0
-    while True:
+    while steps != max_steps:
         inp = episode.next_input()
         if inp is None:
             break
@@ -24,18 +24,10 @@ def run_episode(world, model):
 
     return reward_sum, steps
 
-print("Accuracy of random answers...")
-acc = run_episode(Accuracy(Mnist()), Random(Mnist(), 123))
-print("%.5f" % (acc[0] / acc[1]))
-
-print("Training network...")
 model = BasicNet(
     CrossEntropy(Mnist()),
-    seed=123,
-    episodes=2
+    seed=123
 )
-mandalka.evaluate(model)
 
-print("Accuracy on training data...")
-acc = run_episode(Accuracy(Mnist()), model)
-print("%.5f" % (acc[0] / acc[1]))
+acc = run_episode(Accuracy(Mnist()), model, max_steps=10000)
+print("Accuracy on training data: %.5f" % (acc[0] / acc[1]))

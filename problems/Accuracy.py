@@ -16,7 +16,11 @@ class Episode(RewardEpisode):
         assert isinstance(episode, SupervisedEpisode)
 
         def next_reward(output):
-            correct = np.argmax(episode.next_output())
+            correct = np.asarray(episode.next_output())
+            output = np.asarray(output)
+            assert output.shape == correct.shape
+
+            correct = np.argmax(correct)
             output = np.argmax(output)
 
             score = 1.0 if correct == output else 0.0

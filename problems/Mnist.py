@@ -7,7 +7,7 @@ from .Table import Table
 
 @mandalka.node
 class Mnist(Table):
-    def build(self):
+    def _build(self):
         data = tf_mnist.input_data.read_data_sets(
             "/tmp/mnist-download",
             validation_size=0,

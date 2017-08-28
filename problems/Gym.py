@@ -72,7 +72,7 @@ class Episode(RewardEpisode):
             if env is None:
                 return None
 
-            assert obs is not None
+            assert obs is not None, "Run next_reward() first"
             ret = process_obs(obs)
 
             obs = None
