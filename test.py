@@ -26,7 +26,8 @@ def run_episode(world, model, max_steps=-1):
 
 model = BasicNet(
     CrossEntropy(Mnist()),
-    seed=123
+    seed=123,
+    steps=500000
 )
 
 acc = run_episode(Accuracy(Mnist()), model, max_steps=10000)
