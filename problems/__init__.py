@@ -17,21 +17,20 @@ class Problem:
         return object.__getattribute__(self, name)
 
 class Episode:
-    def next_input(self): # -> input [ndarray] or None
+    def next_input(self): # -> input [ndarray]
         raise NotImplementedError("next_input")
 
-    def interrupt(self):
-        pass
-
-class SupervisedEpisode(Episode):
-    def next_output(self): # -> output [ndarray]
-        raise NotImplementedError("next_output")
-
-class RewardEpisode(Episode):
-    def next_reward(self, output): # -> (reward, gradient) or None
+    def next_reward(self, output): # -> (reward, gradient)
         raise NotImplementedError("next_reward")
+
+    def __next__(self):
+        return self.next_input()
+
+    def __iter__(self):
+        return self
 
 from .Accuracy import Accuracy
 from .CrossEntropy import CrossEntropy
 from .Gym import Gym
-from .Mnist import Mnist
+from .ParallelEpisodes import ParallelEpisodes
+from .Reinforce import Reinforce

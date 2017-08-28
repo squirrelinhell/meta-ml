@@ -2,38 +2,37 @@
 import numpy as np
 import mandalka
 
-from . import Problem, RewardEpisode, SupervisedEpisode
+from . import Problem, Episode
 
 @mandalka.node
 class CrossEntropy(Problem):
-    def __init__(self, problem):
-        self.get_input_shape = problem.get_input_shape
-        self.get_output_shape = problem.get_output_shape
-        self.start_episode = lambda: Episode(problem.start_episode())
+    def __init__(self, dataset):
+        self.get_input_shape = dataset.get_input_shape
+        self.get_output_shape = dataset.get_label_shape
+        self.start_episode = lambda: CE_Episode(
+            *[t.__iter__() for t in dataset.get_shuffled()]
+        )
 
-class Episode(RewardEpisode):
-    def __init__(self, episode):
-        assert isinstance(episode, SupervisedEpisode)
-
+class CE_Episode(Episode):
+    def __init__(self, inputs, labels):
         def next_reward(output):
-            correct = np.asarray(episode.next_output())
-            assert (correct >= 0.0).all()
-            correct /= correct.sum()
-
-            # Linear outputs are assumed
+            # Convert to probabilities
+            output = np.asarray(output)
             output = np.exp(output - np.max(output))
+            output /= output.sum()
+
+            correct = np.asarray(next(labels))
             assert output.shape == correct.shape
 
             # Compute cross entropy
-            output_sum = output.sum()
-            reward = np.sum(correct * np.log(
-                np.maximum(0.00001, output / output_sum))
+            reward = np.sum(
+                correct * np.log(np.maximum(0.00001, output))
             )
-            assert not np.isnan(output_sum)
             assert not np.isnan(reward)
 
-            grad = correct - output / output_sum
+            # Add gradient of this function
+            grad = correct - output
             return (reward, grad)
 
-        self.next_input = episode.next_input
+        self.next_input = inputs.__next__
         self.next_reward = next_reward

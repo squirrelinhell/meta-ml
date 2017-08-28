@@ -16,6 +16,9 @@ class TFBackprop(TFModel):
             lr=0.01,
             eps=0.0001,
             **kwargs):
+        lr = float(lr)
+        eps = float(eps)
+
         input_batch = tf.placeholder(
             tf.float32,
             (None,) + problem.input_shape,
@@ -65,17 +68,19 @@ class TFBackprop(TFModel):
         def train():
             ep = problem.start_episode()
             inputs = []
-            for _ in tqdm.tqdm(range(steps)):
-                inputs.append(ep.next_input())
-                if inputs[-1] is None:
-                    inputs.pop()
+            for _ in tqdm.trange(steps, unit="steps"):
+                try:
+                    inputs.append(ep.next_input())
+                except StopIteration:
                     if len(inputs) >= 1:
                         learn_batch(ep, inputs)
                     ep = problem.start_episode()
                     inputs = [ep.next_input()]
-                if len(inputs) >= batch_size:
+                if len(inputs) == batch_size:
                     learn_batch(ep, inputs)
                     inputs = []
+            if len(inputs) >= 1:
+                learn_batch(ep, inputs)
 
         train()
         return sess

@@ -5,7 +5,7 @@ import numpy as np
 import mandalka
 import threading
 
-from . import Problem, RewardEpisode
+from . import Problem, Episode
 
 @mandalka.node
 class Gym(Problem):
@@ -49,7 +49,7 @@ class Gym(Problem):
             with lock:
                 if len(envs) < 1:
                     envs.append(gym.make(str(env_name)))
-                return Episode(
+                return GM_Episode(
                     envs.pop(),
                     return_env,
                     process_obs,
@@ -62,15 +62,14 @@ class Gym(Problem):
 
         self.start_episode = start_episode
 
-class Episode(RewardEpisode):
+class GM_Episode(Episode):
     def __init__(self, env, on_end, process_obs, process_output):
         obs = env.reset()
 
         def next_input():
             nonlocal obs
-
             if env is None:
-                return None
+                raise StopIteration
 
             assert obs is not None, "Run next_reward() first"
             ret = process_obs(obs)
@@ -79,23 +78,18 @@ class Episode(RewardEpisode):
             return ret
 
         def next_reward(output):
-            nonlocal obs
+            nonlocal env, obs
+            if env is None:
+                raise StopIteration
 
             action = process_output(np.asarray(output))
 
             obs, reward, done, _ = env.step(action)
             if done:
-                interrupt()
-
-            return (reward, None)
-
-        def interrupt():
-            nonlocal env, obs
-
-            if env is not None:
                 on_end(env)
                 env, obs = None, None
 
+            return (reward, None)
+
         self.next_input = next_input
         self.next_reward = next_reward
-        self.interrupt = interrupt
