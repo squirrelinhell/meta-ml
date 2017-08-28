@@ -5,7 +5,7 @@ import numpy as np
 import mandalka
 import threading
 
-from . import Problem, Episode
+from . import Problem, RewardEpisode
 
 @mandalka.node
 class Gym(Problem):
@@ -62,7 +62,7 @@ class Gym(Problem):
 
         self.start_episode = start_episode
 
-class GymEpisode(Episode):
+class GymEpisode(RewardEpisode):
     def __init__(self, env, on_end, process_obs, process_output):
         obs = env.reset()
 

@@ -14,17 +14,22 @@ class Problem:
             return self.get_input_shape()
         if name == "output_shape":
             return self.get_output_shape()
-        return super().__getattr__(name)
+        return object.__getattribute__(self, name)
 
 class Episode:
     def next_input(self): # -> input [ndarray] or None
         raise NotImplementedError("next_input")
 
-    def next_reward(self, output): # -> (reward, gradient)
-        raise NotImplementedError("next_reward")
-
     def interrupt(self):
         pass
+
+class SupervisedEpisode(Episode):
+    def next_output(self): # -> output
+        raise NotImplementedError("next_output")
+
+class RewardEpisode(Episode):
+    def next_reward(self, output): # -> (reward, gradient) or None
+        raise NotImplementedError("next_reward")
 
 from .Gym import Gym
 from .Mnist import Mnist
