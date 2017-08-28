@@ -29,29 +29,28 @@ class Mnist(Problem):
         )
 
 class MnistEpisode(Episode):
-    def __init__(self, inputs, labels):
-        assert len(inputs) == len(labels)
+    def __init__(self, all_inputs, all_labels):
+        assert len(all_inputs) == len(all_labels)
 
-        def get_input_batch(batch_size=128):
-            nonlocal inputs
-            if len(inputs) < batch_size:
-                return None
-            ret = inputs[0:batch_size]
-            inputs = inputs[batch_size:]
+        def next_input():
+            nonlocal all_inputs
+
+            ret, all_inputs = all_inputs[0], all_inputs[1:]
             return ret
 
-        def get_reward_gradient(output_batch):
-            output_batch = np.abs(output_batch)
+        def next_reward(output):
+            nonlocal all_labels
+            correct, all_labels = all_labels[0], all_labels[1:]
 
-            nonlocal labels
-            ok = labels[0:len(output_batch)]
-            labels = labels[len(output_batch):]
-            assert len(inputs) == len(labels)
+            output = np.maximum(0.00001, output)
+            assert output.shape == (10,)
 
-            return np.mean(
-                ok * (output_batch.T.sum(axis=0) / output_batch.T).T,
-                axis=0
-            )
+            # Compute cross entropy
+            output_sum = np.sum(output)
+            reward = np.sum(correct * np.log(output / output_sum))
+            grad = correct / output - 1.0 / output_sum
 
-        self.get_input_batch = get_input_batch
-        self.get_reward_gradient = get_reward_gradient
+            return (reward, grad)
+
+        self.next_input = next_input
+        self.next_reward = next_reward

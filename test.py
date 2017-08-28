@@ -6,20 +6,18 @@ from models import Random
 from problems import Gym, Mnist
 import debug
 
-def evaluate(model, episode):
+def run_episode(world, model):
+    episode = world.start_episode()
+
     reward_sum = 0.0
     while True:
-        inps = episode.get_input_batch()
-        if inps is None:
+        inp = episode.next_input()
+        if inp is None:
             break
 
-        outs = model.predict_batch(inps)
-        assert len(inps) == len(outs)
-
-        rewards = episode.get_reward_batch(outs)
-        assert len(inps) == rewards.size
-
-        reward_sum += np.mean(rewards)
+        out = model.predict(inp)
+        reward, grad = episode.next_reward(out)
+        reward_sum += reward
 
     return reward_sum
 
@@ -27,16 +25,18 @@ world = Gym("CartPole-v1")
 model = Random(world, seed=123)
 
 for _ in range(10):
-    print(evaluate(model, world.start_episode()))
+    print(run_episode(world, model))
 
 world = Mnist()
 model = Random(world, seed=123)
 ep = world.start_episode()
-batch = ep.get_input_batch(2)
-print(batch)
 
-pred = model.predict_batch(batch)
-print(pred)
+inp = ep.next_input()
+print((inp*2).astype(np.int))
 
-grad = ep.get_reward_gradient(pred)
-print(grad)
+out = model.predict(inp)
+print(np.round(out, 2))
+
+reward, grad = ep.next_reward(out)
+print(reward)
+print(np.round(grad, 2))

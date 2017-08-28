@@ -19,12 +19,14 @@ class Gym(Problem):
             self.get_input_shape = lambda: o_space.shape
             def process_obs(obs):
                 return obs
+
         elif isinstance(o_space, gym.spaces.Discrete):
             self.get_input_shape = lambda: (o_space.n,)
             def process_obs(obs):
                 one_hot = np.zeros(o_space.n,)
                 one_hot[obs] = 1.0
                 return one_hot
+
         else:
             raise ValueError("Unsupported observation space")
 
@@ -33,11 +35,13 @@ class Gym(Problem):
             def process_output(output):
                 assert output.shape == a_space.shape
                 return output
+
         elif isinstance(a_space, gym.spaces.Discrete):
             self.get_output_shape = lambda: (a_space.n,)
             def process_output(output):
                 assert output.shape == (a_space.n,)
                 return np.argmax(output)
+
         else:
             raise ValueError("Unsupported action space")
 
@@ -47,12 +51,12 @@ class Gym(Problem):
                     envs.append(gym.make(str(env_name)))
                 return GymEpisode(
                     envs.pop(),
-                    on_episode_end,
+                    return_env,
                     process_obs,
                     process_output
                 )
 
-        def on_episode_end(env):
+        def return_env(env):
             with lock:
                 envs.append(env)
 
@@ -62,24 +66,36 @@ class GymEpisode(Episode):
     def __init__(self, env, on_end, process_obs, process_output):
         obs = env.reset()
 
-        def get_input_batch(batch_size=1):
-            if env is None:
-                return None
-            assert batch_size == 1
-            return np.array([process_obs(obs)])
+        def next_input():
+            nonlocal obs
 
-        def get_reward_batch(output_batch):
-            nonlocal env, obs
             if env is None:
                 return None
-            output_batch = np.asarray(output_batch)
-            assert len(output_batch) == 1
-            action = process_output(output_batch[0])
+
+            assert obs is not None
+            ret = process_obs(obs)
+
+            obs = None
+            return ret
+
+        def next_reward(output):
+            nonlocal obs
+
+            action = process_output(np.asarray(output))
+
             obs, reward, done, _ = env.step(action)
             if done:
-                on_end(env)
-                env = None
-            return np.array([reward])
+                interrupt()
 
-        self.get_input_batch = get_input_batch
-        self.get_reward_batch = get_reward_batch
+            return (reward, None)
+
+        def interrupt():
+            nonlocal env, obs
+
+            if env is not None:
+                on_end(env)
+                env, obs = None, None
+
+        self.next_input = next_input
+        self.next_reward = next_reward
+        self.interrupt = interrupt

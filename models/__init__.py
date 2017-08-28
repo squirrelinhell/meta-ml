@@ -5,8 +5,8 @@ class Model:
     #def __init__(self, problem, seed, ...)
     #    pass
 
-    def predict_batch(self, inputs):
-        raise NotImplementedError("predict_batch")
+    def predict(self, input):
+        raise NotImplementedError("predict")
 
 @mandalka.node
 class ModelFactory:

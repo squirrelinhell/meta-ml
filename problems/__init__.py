@@ -1,29 +1,30 @@
 
 class Problem:
-    def get_input_shape(self):
-        # returns a tuple of int
+    def get_input_shape(self): # -> shape [tuple of int]
         raise NotImplementedError("get_input_shape")
 
-    def get_output_shape(self):
-        # returns a tuple of int
+    def get_output_shape(self): # -> shape [tuple of int]
         raise NotImplementedError("get_output_shape")
 
-    def start_episode(self):
-        # returns Episode
+    def start_episode(self): # -> episode
         raise NotImplementedError("start_episode")
 
+    def __getattr__(self, name):
+        if name == "input_shape":
+            return self.get_input_shape()
+        if name == "output_shape":
+            return self.get_output_shape()
+        return super().__getattr__(name)
+
 class Episode:
-    def get_input_batch(self, batch_size):
-        # returns ndarray with shape (batch_size,) + get_input_shape()
-        raise NotImplementedError("get_input_batch")
+    def next_input(self): # -> input [ndarray] or None
+        raise NotImplementedError("next_input")
 
-    def get_reward_batch(self, output_batch):
-        # returns ndarray with size == len(output_batch)
-        raise NotImplementedError("get_reward_batch")
+    def next_reward(self, output): # -> (reward, gradient)
+        raise NotImplementedError("next_reward")
 
-    def get_reward_gradient(self, output_batch):
-        # returns ndarray with shape output_batch.shape[1:]
-        raise NotImplementedError("get_reward_gradient")
+    def interrupt(self):
+        pass
 
 from .Gym import Gym
 from .Mnist import Mnist
