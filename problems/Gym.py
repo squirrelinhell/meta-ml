@@ -49,7 +49,7 @@ class Gym(Problem):
             with lock:
                 if len(envs) < 1:
                     envs.append(gym.make(str(env_name)))
-                return GymEpisode(
+                return Episode(
                     envs.pop(),
                     return_env,
                     process_obs,
@@ -62,7 +62,7 @@ class Gym(Problem):
 
         self.start_episode = start_episode
 
-class GymEpisode(RewardEpisode):
+class Episode(RewardEpisode):
     def __init__(self, env, on_end, process_obs, process_output):
         obs = env.reset()
 

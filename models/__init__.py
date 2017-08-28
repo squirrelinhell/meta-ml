@@ -21,4 +21,5 @@ class ModelFactory:
             **self.params
         )
 
+from .BasicNet import BasicNet
 from .Random import Random

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+import mandalka
 import numpy as np
 
-from models import Random
-from problems import Gym, Mnist
+from models import Random, BasicNet
+from problems import Gym, Mnist, CrossEntropy, Accuracy
 import debug
 
 def run_episode(world, model):
@@ -21,15 +22,20 @@ def run_episode(world, model):
         reward, grad = episode.next_reward(out)
         reward_sum += reward
 
-    return steps, reward_sum
+    return reward_sum, steps
 
-world = Gym("CartPole-v1")
-model = Random(world, seed=123)
+print("Accuracy of random answers...")
+acc = run_episode(Accuracy(Mnist()), Random(Mnist(), 123))
+print("%.5f" % (acc[0] / acc[1]))
 
-for _ in range(10):
-    print(run_episode(world, model))
+print("Training network...")
+model = BasicNet(
+    CrossEntropy(Mnist()),
+    seed=123,
+    episodes=2
+)
+mandalka.evaluate(model)
 
-world = Mnist()
-model = Random(world, seed=123)
-
-print(run_episode(world, model))
+print("Accuracy on training data...")
+acc = run_episode(Accuracy(Mnist()), model)
+print("%.5f" % (acc[0] / acc[1]))

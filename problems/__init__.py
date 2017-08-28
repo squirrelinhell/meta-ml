@@ -24,12 +24,14 @@ class Episode:
         pass
 
 class SupervisedEpisode(Episode):
-    def next_output(self): # -> output
+    def next_output(self): # -> output [ndarray]
         raise NotImplementedError("next_output")
 
 class RewardEpisode(Episode):
     def next_reward(self, output): # -> (reward, gradient) or None
         raise NotImplementedError("next_reward")
 
+from .Accuracy import Accuracy
+from .CrossEntropy import CrossEntropy
 from .Gym import Gym
 from .Mnist import Mnist

@@ -19,6 +19,8 @@ class Table(Problem):
         else:
             os.makedirs(path + ".tmp", exist_ok=True)
             inputs, outputs = self.build(*args, **kwargs)
+            inputs = np.clip(inputs, -1.0, 1.0)
+            outputs = np.clip(outputs, -1.0, 1.0)
             assert len(inputs) == len(outputs)
             np.save(path + ".tmp/inputs.npy", inputs)
             np.save(path + ".tmp/outputs.npy", outputs)
@@ -35,9 +37,9 @@ class Table(Problem):
         self.get_shuffled = lambda: shuffle_all(inputs, outputs)
 
     def start_episode(self):
-        return TableEpisode(*self.get_shuffled())
+        return Episode(*self.get_shuffled())
 
-class TableEpisode(SupervisedEpisode):
+class Episode(SupervisedEpisode):
     def __init__(self, inputs, outputs):
         def next_input():
             nonlocal inputs
