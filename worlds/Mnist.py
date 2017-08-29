@@ -3,10 +3,10 @@ import numpy as np
 import mandalka
 import tensorflow.examples.tutorials.mnist as tf_mnist
 
-from . import Dataset
+from .Table import Table
 
 @mandalka.node
-class Mnist(Dataset):
+class Mnist(Table):
     def _build(self, test=False):
         data = tf_mnist.input_data.read_data_sets(
             "/tmp/mnist-download",

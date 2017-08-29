@@ -1,31 +1,37 @@
 #!/usr/bin/env python3
 
-from datasets import Mnist
-from problems import CrossEntropy, Accuracy
-from models import BasicNet
+import numpy as np
+import tqdm
+
+from worlds import (
+    Mnist,
+    Distribution,
+    Accuracy,
+    BasicNet
+)
+
 import debug
 
-def run_episode(world, model):
-    episode = world.start_episode()
-    steps = 0
+def train():
+    world = BasicNet(
+        Distribution(Mnist())
+    )
 
-    reward_sum = 0.0
-    for inp in episode:
-        steps += 1
-        out = model.predict(inp)
-        reward, _ = episode.next_reward(out)
-        reward_sum += reward
+    ep = world.start_episode(123)
 
-    return reward_sum, steps
+    reward = ep.step(np.zeros(world.a_shape))
+    for obs, _ in zip(ep, tqdm.tqdm(range(2000))):
+        reward = ep.step(reward * 0.0001)
 
-model = BasicNet(
-    CrossEntropy(Mnist()),
-    seed=123
-)
+    return ep
 
-acc = run_episode(
-    Accuracy(Mnist(test=True)),
-    model
-)
+print("Ascending gradient...")
+trained = train()
 
-print("Accuracy on test data: %.5f" % (acc[0] / acc[1]))
+print("Checking accuracy...")
+world = Accuracy(Mnist(test=True))
+ep = world.start_episode(123)
+acc_sum = 0.0
+for obs, _ in zip(ep, tqdm.tqdm(range(5000))):
+    acc_sum += ep.step(trained.solve(obs))
+print("%.1f%%" % (acc_sum/50.0))
