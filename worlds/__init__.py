@@ -31,22 +31,11 @@ class Episode:
     def get_observation(self): # -> observation [ndarray] or None
         return None
 
-    def step(self, action): # -> reward [ndarray]
+    def step(self, action): # -> reward [ndarray] or <StopIteration>
         raise NotImplementedError("step")
 
-    def __next__(self):
-        return self.get_observation()
-
-    def __iter__(self):
-        return self
-
 from .Accuracy import Accuracy
-from .BasicNet import BasicNet
 from .Distribution import Distribution
 from .Mnist import Mnist
+from .PolicyNet import PolicyNet
 from .Reinforce import Reinforce
-
-def compose(World1, World2):
-    return lambda *args, **kwargs: World1(World2(*args, **kwargs))
-
-Reinforce = compose(Distribution, Reinforce)

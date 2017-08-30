@@ -15,6 +15,11 @@ class Reinforce(World):
                 rng = np.random.RandomState((seed, 1))
 
                 def step(action):
+                    # Safely calculate softmax
+                    action = np.asarray(action)
+                    action = np.exp(action - np.max(action))
+                    action /= action.sum()
+
                     # Random draw from policy
                     flat = action.reshape((-1))
                     action_i = rng.choice(len(flat), p=flat)
@@ -24,6 +29,7 @@ class Reinforce(World):
                     one_hot.flat[action_i] = 1.0
                     reward = ep.step(one_hot)
 
+                    # Cross entropy gradient
                     return (one_hot - action) * np.sum(reward)
 
                 self.get_observation = ep.get_observation

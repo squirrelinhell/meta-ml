@@ -7,21 +7,21 @@ from worlds import (
     Mnist,
     Distribution,
     Accuracy,
-    BasicNet
+    PolicyNet
 )
 
 import debug
 
 def train():
-    world = BasicNet(
+    world = PolicyNet(
         Distribution(Mnist())
     )
 
     ep = world.start_episode(123)
 
     reward = ep.step(np.zeros(world.a_shape))
-    for obs, _ in zip(ep, tqdm.tqdm(range(2000))):
-        reward = ep.step(reward * 0.0001)
+    for _ in tqdm.trange(500):
+        reward = ep.step(reward * 200.0)
 
     return ep
 
@@ -30,8 +30,8 @@ trained = train()
 
 print("Checking accuracy...")
 world = Accuracy(Mnist(test=True))
-ep = world.start_episode(123)
 acc_sum = 0.0
-for obs, _ in zip(ep, tqdm.tqdm(range(5000))):
-    acc_sum += ep.step(trained.solve(obs))
+for i in tqdm.tqdm(range(5000)):
+    ep = world.start_episode(i)
+    acc_sum += ep.step(trained.solve(ep.get_observation()))
 print("%.1f%%" % (acc_sum/50.0))

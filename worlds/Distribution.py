@@ -19,7 +19,7 @@ class Distribution(World):
                     action = np.exp(action - np.max(action))
                     action /= action.sum()
 
-                    # Gradient stays the same (magic!)
+                    # Cross entropy gradient
                     return ep.step(action)
 
                 self.get_observation = ep.get_observation

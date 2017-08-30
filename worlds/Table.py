@@ -28,15 +28,17 @@ class Table(World):
             def __init__(self, seed):
                 rng = np.random.RandomState(seed)
                 i = rng.choice(len(inputs))
+                done = False
                 def get_observation():
                     return inputs[i]
                 def step(action):
-                    nonlocal i
+                    nonlocal done
+                    if done:
+                        raise StopIteration
+                    done = True
                     action = np.asarray(action)
                     assert action.shape == labels[0].shape
-                    reward = labels[i] - action
-                    i = rng.choice(len(inputs))
-                    return reward
+                    return labels[i] - action
                 self.get_observation = get_observation
                 self.step = step
 
