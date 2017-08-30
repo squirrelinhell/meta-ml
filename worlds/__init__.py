@@ -28,7 +28,7 @@ class World:
         return object.__getattribute__(self, name)
 
 class Episode:
-    def get_observation(self): # -> observation [ndarray] or None
+    def next_observation(self): # -> observation [ndarray] or None
         raise StopIteration
 
     def step(self, action): # -> reward [ndarray]
@@ -38,10 +38,11 @@ class Episode:
         return self
 
     def __next__(self):
-        return self.get_observation()
+        return self.next_observation()
 
 from .Accuracy import Accuracy
 from .Distribution import Distribution
+from .Gym import Gym
 from .Mnist import Mnist
 from .PolicyNet import PolicyNet
 from .Reinforce import Reinforce

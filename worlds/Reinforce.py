@@ -6,12 +6,17 @@ from . import World, Episode
 
 @mandalka.node
 class Reinforce(World):
-    def __init__(self, world):
+    def __init__(self, world, test=False):
         super().__init__(world)
-        self.start_episode = lambda seed: Ep(world, seed)
+        if test:
+            self.get_reward_shape = (1,)
+        else:
+            self.get_reward_shape = lambda: world.get_action_shape()
+
+        self.start_episode = lambda seed: Ep(world, seed, test)
 
 class Ep(Episode):
-    def __init__(self, world, seed):
+    def __init__(self, world, seed, test):
         rng = np.random.RandomState(seed)
         ep = world.start_episode(rng.randint(2**32))
 
@@ -28,10 +33,13 @@ class Ep(Episode):
             # Send the choice to the environment
             one_hot = action * 0.0
             one_hot.flat[action_i] = 1.0
-            reward = ep.step(one_hot)
+            reward = np.sum(ep.step(one_hot))
 
-            # Cross entropy gradient
-            return (one_hot - action) * np.sum(reward)
+            if test:
+                return [reward]
+            else:
+                # Cross entropy gradient
+                return (one_hot - action) * reward
 
-        self.get_observation = ep.get_observation
+        self.next_observation = ep.next_observation
         self.step = step

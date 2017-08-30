@@ -34,5 +34,5 @@ world = Accuracy(Mnist(test=True))
 acc_sum = 0.0
 for i in tqdm.tqdm(range(5000)):
     ep = world.start_episode(i)
-    acc_sum += ep.step(trained.solve(ep.get_observation()))
+    acc_sum += ep.step(trained.solve(ep.next_observation()))
 print("%.1f%%" % (acc_sum/50.0))

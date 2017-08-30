@@ -23,5 +23,5 @@ class Ep(Episode):
             # Cross entropy gradient
             return ep.step(action)
 
-        self.get_observation = ep.get_observation
+        self.next_observation = ep.next_observation
         self.step = step

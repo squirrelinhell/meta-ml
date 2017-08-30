@@ -1,4 +1,5 @@
 
+import sys
 import numpy as np
 import tensorflow as tf
 
@@ -14,6 +15,8 @@ class BasePolicy(World):
         # eval_batch(o_batch) -> a_batch
 
         def _test_policy(seed_batch, eval_batch):
+            assert world.r_shape == world.a_shape
+
             # Start <batch_size> episodes in parallel
             eps = [world.start_episode(s) for s in seed_batch]
             is_active = [True] * len(eps)
@@ -27,7 +30,7 @@ class BasePolicy(World):
                 for i in range(len(eps)):
                     if is_active[i]:
                         try:
-                            o = eps[i].get_observation()
+                            o = eps[i].next_observation()
                             o_batch.append(o)
                             active_i.append(i)
                         except StopIteration:
@@ -44,6 +47,8 @@ class BasePolicy(World):
                     rews[i].append(r)
                     history.append((o, a, i))
 
+            ep_len = np.mean([len(r) for r in rews])
+
             # Averaging rewards from each episode will in the end
             # work like summing, because they appear multiple times
             rews = np.array([np.mean(r, axis=0) for r in rews])
@@ -51,11 +56,13 @@ class BasePolicy(World):
 
             # Normalize rewards if requested
             if normalize_rewards:
-                rews -= rew.mean()
+                rews -= rews.mean()
                 stddev = rews.std()
-                assert stddev > 0.00001
-                rews /= stddev
+                if stddev < 0.00001:
+                    sys.stderr.write("Warning: gradient is zero\n")
+                else:
+                    rews /= stddev
 
-            return [(o, a, rews[i]) for o, a, i in history]
+            return [(o, a, rews[i]) for o, a, i in history], ep_len
 
         self._test_policy = _test_policy

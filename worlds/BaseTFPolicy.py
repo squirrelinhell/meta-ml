@@ -18,6 +18,7 @@ class BaseTFPolicy(BasePolicy):
         # Prepare parameters
         params = Parameters()
         n_params = 0
+        self.get_observation_shape = (1,)
         self.get_action_shape = lambda: (n_params,)
         self.get_reward_shape = lambda: (n_params,)
 
@@ -55,13 +56,17 @@ class BaseTFPolicy(BasePolicy):
             sess = tf.Session()
             sess.run(init_op)
 
+            ep_len = 0.0
+
             def step(action):
+                nonlocal ep_len
+
                 sess.run(
                     add_op,
                     feed_dict={add_value: action}
                 )
 
-                history = self._test_policy(
+                history, ep_len = self._test_policy(
                     rng.randint(2**32, size=batch_size),
                     lambda o: sess.run(
                         a_batch,
@@ -82,7 +87,7 @@ class BaseTFPolicy(BasePolicy):
                 )[0]
 
             ep = Episode()
-            ep.get_observation = lambda: None
+            ep.next_observation = lambda: [ep_len]
             ep.step = step
             ep.solve = solve
             return ep

@@ -36,7 +36,7 @@ class Ep(Episode):
     def __init__(self, inp, label):
         done = False
 
-        def get_observation():
+        def next_observation():
             if done:
                 raise StopIteration
 
@@ -52,5 +52,5 @@ class Ep(Episode):
             assert action.shape == label.shape
             return label - action
 
-        self.get_observation = get_observation
+        self.next_observation = next_observation
         self.step = step

@@ -24,5 +24,5 @@ class Ep(Episode):
             else:
                 return 0.0
 
-        self.get_observation = ep.get_observation
+        self.next_observation = ep.next_observation
         self.step = step
