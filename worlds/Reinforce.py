@@ -8,31 +8,30 @@ from . import World, Episode
 class Reinforce(World):
     def __init__(self, world):
         super().__init__(world)
+        self.start_episode = lambda seed: Ep(world, seed)
 
-        class Ep(Episode):
-            def __init__(self, seed):
-                ep = world.start_episode((seed, 0))
-                rng = np.random.RandomState((seed, 1))
+class Ep(Episode):
+    def __init__(self, world, seed):
+        ep = world.start_episode((seed, 0))
+        rng = np.random.RandomState((seed, 1))
 
-                def step(action):
-                    # Safely calculate softmax
-                    action = np.asarray(action)
-                    action = np.exp(action - np.max(action))
-                    action /= action.sum()
+        def step(action):
+            # Safely calculate softmax
+            action = np.asarray(action)
+            action = np.exp(action - np.max(action))
+            action /= action.sum()
 
-                    # Random draw from policy
-                    flat = action.reshape((-1))
-                    action_i = rng.choice(len(flat), p=flat)
+            # Random draw from policy
+            flat = action.reshape((-1))
+            action_i = rng.choice(len(flat), p=flat)
 
-                    # Send the choice to the environment
-                    one_hot = action * 0.0
-                    one_hot.flat[action_i] = 1.0
-                    reward = ep.step(one_hot)
+            # Send the choice to the environment
+            one_hot = action * 0.0
+            one_hot.flat[action_i] = 1.0
+            reward = ep.step(one_hot)
 
-                    # Cross entropy gradient
-                    return (one_hot - action) * np.sum(reward)
+            # Cross entropy gradient
+            return (one_hot - action) * np.sum(reward)
 
-                self.get_observation = ep.get_observation
-                self.step = step
-
-        self.start_episode = Ep
+        self.get_observation = ep.get_observation
+        self.step = step

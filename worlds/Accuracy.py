@@ -8,22 +8,21 @@ from . import World, Episode
 class Accuracy(World):
     def __init__(self, world):
         super().__init__(world)
+        self.start_episode = lambda seed: Ep(world, seed)
 
-        class Ep(Episode):
-            def __init__(self, seed):
-                ep = world.start_episode(seed)
+class Ep(Episode):
+    def __init__(self, world, seed):
+        ep = world.start_episode(seed)
 
-                def step(action):
-                    one_hot = action * 0.0
-                    one_hot.flat[np.argmax(action)] = 1.0
-                    reward = ep.step(one_hot)
+        def step(action):
+            one_hot = action * 0.0
+            one_hot.flat[np.argmax(action)] = 1.0
+            reward = ep.step(one_hot)
 
-                    if np.sum(np.abs(reward)) < 0.01:
-                        return 1.0
-                    else:
-                        return 0.0
+            if np.sum(np.abs(reward)) < 0.01:
+                return 1.0
+            else:
+                return 0.0
 
-                self.get_observation = ep.get_observation
-                self.step = step
-
-        self.start_episode = Ep
+        self.get_observation = ep.get_observation
+        self.step = step

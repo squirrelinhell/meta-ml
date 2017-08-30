@@ -5,7 +5,7 @@ import numpy as np
 
 from . import World, Episode
 
-class Table(World):
+class BaseTable(World):
     def _build(self, **kwargs): # -> (inputs, labels)
         raise NotImplementedError("_build")
 
@@ -24,25 +24,32 @@ class Table(World):
             np.save(path + ".tmp/labels.npy", labels)
             os.rename(path + ".tmp", path)
 
-        class Ep(Episode):
-            def __init__(self, seed):
-                rng = np.random.RandomState(seed)
-                i = rng.choice(len(inputs))
-                done = False
-                def get_observation():
-                    return inputs[i]
-                def step(action):
-                    nonlocal done
-                    if done:
-                        raise StopIteration
-                    done = True
-                    action = np.asarray(action)
-                    assert action.shape == labels[0].shape
-                    return labels[i] - action
-                self.get_observation = get_observation
-                self.step = step
-
         self.get_observation_shape = lambda: inputs[0].shape
         self.get_action_shape = lambda: labels[0].shape
         self.get_reward_shape = lambda: labels[0].shape
-        self.start_episode = Ep
+        self.start_episode = lambda seed: Ep(inputs, labels, seed)
+
+class Ep(Episode):
+    def __init__(self, inputs, labels, seed):
+        rng = np.random.RandomState(seed)
+        i = rng.choice(len(inputs))
+        done = False
+
+        def get_observation():
+            if done:
+                raise StopIteration
+
+            return inputs[i]
+
+        def step(action):
+            nonlocal done
+            if done:
+                raise StopIteration
+            done = True
+
+            action = np.asarray(action)
+            assert action.shape == labels[0].shape
+            return labels[i] - action
+
+        self.get_observation = get_observation
+        self.step = step

@@ -29,9 +29,9 @@ class World:
 
 class Episode:
     def get_observation(self): # -> observation [ndarray] or None
-        return None
+        raise StopIteration
 
-    def step(self, action): # -> reward [ndarray] or <StopIteration>
+    def step(self, action): # -> reward [ndarray]
         raise NotImplementedError("step")
 
 from .Accuracy import Accuracy

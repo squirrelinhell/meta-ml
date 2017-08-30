@@ -8,21 +8,20 @@ from . import World, Episode
 class Distribution(World):
     def __init__(self, world):
         super().__init__(world)
+        self.start_episode = lambda seed: Ep(world, seed)
 
-        class Ep(Episode):
-            def __init__(self, seed):
-                ep = world.start_episode(seed)
+class Ep(Episode):
+    def __init__(self, world, seed):
+        ep = world.start_episode(seed)
 
-                def step(action):
-                    # Safely calculate softmax
-                    action = np.asarray(action)
-                    action = np.exp(action - np.max(action))
-                    action /= action.sum()
+        def step(action):
+            # Safely calculate softmax
+            action = np.asarray(action)
+            action = np.exp(action - np.max(action))
+            action /= action.sum()
 
-                    # Cross entropy gradient
-                    return ep.step(action)
+            # Cross entropy gradient
+            return ep.step(action)
 
-                self.get_observation = ep.get_observation
-                self.step = step
-
-        self.start_episode = Ep
+        self.get_observation = ep.get_observation
+        self.step = step

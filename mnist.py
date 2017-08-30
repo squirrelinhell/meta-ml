@@ -20,7 +20,8 @@ def train():
     ep = world.start_episode(123)
 
     reward = ep.step(np.zeros(world.a_shape))
-    for _ in tqdm.trange(500):
+    for _ in range(500):
+        print("%.8f" % np.mean(np.abs(reward)))
         reward = ep.step(reward * 200.0)
 
     return ep

@@ -3,10 +3,10 @@ import mandalka
 import numpy as np
 import tensorflow as tf
 
-from .TFPolicy import TFPolicy
+from .BaseTFPolicy import BaseTFPolicy
 
 @mandalka.node
-class PolicyNet(TFPolicy):
+class PolicyNet(BaseTFPolicy):
     def _policy(self, o_batch, a_shape, params,
             hidden_layers=[128]):
         params.alloc(101770)
