@@ -61,16 +61,18 @@ class BaseTFPolicy(BasePolicy):
                     feed_dict={add_value: action}
                 )
 
-                return self._run_episodes(
+                history = self._test_policy(
                     rng.randint(2**32, size=batch_size),
                     lambda o: sess.run(
                         a_batch,
                         feed_dict={o_batch: o}
-                    ),
-                    lambda o, _, r: sess.run(
-                        p_grad,
-                        feed_dict={o_batch: o, a_grad: r}
                     )
+                )
+
+                o, a, r = zip(*history)
+                return sess.run(
+                    p_grad,
+                    feed_dict={o_batch: o, a_grad: r}
                 )
 
             def solve(o):

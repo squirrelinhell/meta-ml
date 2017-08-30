@@ -27,19 +27,20 @@ class BaseTable(World):
         self.get_observation_shape = lambda: inputs[0].shape
         self.get_action_shape = lambda: labels[0].shape
         self.get_reward_shape = lambda: labels[0].shape
-        self.start_episode = lambda seed: Ep(inputs, labels, seed)
+        self.start_episode = lambda seed: Ep(
+            inputs[seed % len(inputs)],
+            labels[seed % len(inputs)]
+        )
 
 class Ep(Episode):
-    def __init__(self, inputs, labels, seed):
-        rng = np.random.RandomState(seed)
-        i = rng.choice(len(inputs))
+    def __init__(self, inp, label):
         done = False
 
         def get_observation():
             if done:
                 raise StopIteration
 
-            return inputs[i]
+            return inp
 
         def step(action):
             nonlocal done
@@ -48,8 +49,8 @@ class Ep(Episode):
             done = True
 
             action = np.asarray(action)
-            assert action.shape == labels[0].shape
-            return labels[i] - action
+            assert action.shape == label.shape
+            return label - action
 
         self.get_observation = get_observation
         self.step = step

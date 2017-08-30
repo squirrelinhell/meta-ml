@@ -34,6 +34,12 @@ class Episode:
     def step(self, action): # -> reward [ndarray]
         raise NotImplementedError("step")
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.get_observation()
+
 from .Accuracy import Accuracy
 from .Distribution import Distribution
 from .Mnist import Mnist

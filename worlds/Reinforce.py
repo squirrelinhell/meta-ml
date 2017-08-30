@@ -12,8 +12,8 @@ class Reinforce(World):
 
 class Ep(Episode):
     def __init__(self, world, seed):
-        ep = world.start_episode((seed, 0))
-        rng = np.random.RandomState((seed, 1))
+        rng = np.random.RandomState(seed)
+        ep = world.start_episode(rng.randint(2**32))
 
         def step(action):
             # Safely calculate softmax

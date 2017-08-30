@@ -12,9 +12,8 @@ class BasePolicy(World):
             **kwargs):
 
         # eval_batch(o_batch) -> a_batch
-        # reward_batch(a_batch, a_batch, r_batch) -> r_batch
 
-        def _run_episodes(seed_batch, eval_batch, reward_batch):
+        def _test_policy(seed_batch, eval_batch):
             # Start <batch_size> episodes in parallel
             eps = [world.start_episode(s) for s in seed_batch]
             is_active = [True] * len(eps)
@@ -57,7 +56,6 @@ class BasePolicy(World):
                 assert stddev > 0.00001
                 rews /= stddev
 
-            history = [(o, a, rews[i]) for o, a, i in history]
-            return reward_batch(*zip(*history))
+            return [(o, a, rews[i]) for o, a, i in history]
 
-        self._run_episodes = _run_episodes
+        self._test_policy = _test_policy
