@@ -8,7 +8,10 @@ class BaseTFPolicy(World, Agent):
     def _policy(self, o_batch, a_shape, params, **kwargs): # -> a_batch
         raise NotImplementedError("_policy")
 
-    def __init__(self, world, ep_len=1000, after=None, **kwargs):
+    def __init__(self, world,
+            init_seed,
+            ep_len=100,
+            **kwargs):
         import tensorflow as tf
         import numpy as np
 
@@ -66,10 +69,13 @@ class BaseTFPolicy(World, Agent):
 
             return sess
 
-        if after is None:
+        if not isinstance(init_seed, dict):
             sess = build_session()
         else:
-            sess = after[0]._get_session()
+            # For continued learning, reuse the session object
+            # (the only difference is the values of parameters,
+            # which are in a placeholder anyway)
+            sess = init_seed["prev"]._get_session()
 
         params_value = None
         n_params = sess.params.shape[0].value
@@ -116,27 +122,29 @@ class BaseTFPolicy(World, Agent):
         def init_params():
             nonlocal params_value
 
-            if after is None:
-                params_value = np.random.randn(n_params)
+            if not isinstance(init_seed, dict):
+                rng = np.random.RandomState(init_seed)
+                params_value = rng.randn(n_params)
             else:
-                prev, agent, seed = after
-                rng = np.random.RandomState(seed)
-                params_value = prev._get_params_value()
+                # Continue learning from a previous state
+                assert ep_len >= 1
+                rng = np.random.RandomState(init_seed["seed"])
+                params_value = init_seed["prev"]._get_params_value()
                 for _ in range(ep_len):
-                    step(agent, rng.randint(2**32))
+                    step(init_seed["agent"], rng.randint(2**32))
 
         init_params()
 
         def after_episode(agent, seed):
             return self.__class__(
-                world,
-                ep_len,
-                after=(self, agent, seed),
+                world=world,
+                init_seed={"prev": self, "agent": agent, "seed": seed},
+                ep_len=ep_len,
                 **kwargs
             ), []
 
         self.after_episode = after_episode
-        self._get_params_value = lambda: params_value
+        self._get_params_value = lambda: params_value.copy()
         self._get_session = lambda: sess
 
 class Parameters:

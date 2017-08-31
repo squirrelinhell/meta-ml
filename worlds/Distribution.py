@@ -2,7 +2,7 @@
 import mandalka
 
 from . import World
-from agents import AsDistribution
+from agents import Softmax
 
 @mandalka.node
 class Distribution(World):
@@ -13,13 +13,13 @@ class Distribution(World):
         self.get_action_shape = lambda: world.a_shape
         self.get_reward_shape = lambda: world.r_shape
 
-        dist_agents = {}
+        sm_agents = {}
 
         def after_episode(agent, seed):
-            if agent not in dist_agents:
-                dist_agents[agent] = AsDistribution(agent)
+            if agent not in sm_agents:
+                sm_agents[agent] = Softmax(agent)
 
-            w2, exp = world.after_episode(dist_agents[agent], seed)
+            w2, exp = world.after_episode(sm_agents[agent], seed)
 
             return self if w2 == world else Distribution(w2), exp
 

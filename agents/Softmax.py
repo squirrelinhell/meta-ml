@@ -4,7 +4,7 @@ import mandalka
 from . import Agent
 
 @mandalka.node
-class AsDistribution(Agent):
+class Softmax(Agent):
     def __init__(self, agent):
         import numpy as np
 

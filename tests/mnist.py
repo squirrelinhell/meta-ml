@@ -12,7 +12,10 @@ def print_exp(exp):
         print(a)
         print(r)
 
-world = Distribution(Mnist(batch_size=1))
-for i in range(10):
-    world, exp = world.after_episode(Repeat([0] * 10), i)
-    print_exp(exp)
+def test():
+    world = Distribution(Mnist(batch_size=1))
+    for i in range(10):
+        world, exp = world.after_episode(Repeat([0] * 10), i)
+        print_exp(exp)
+
+test()

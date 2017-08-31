@@ -14,23 +14,29 @@ if [ "x$1" != x ]; then
     exec python3 "$TMPDIR/run.py"
 fi
 
-for test in $(ls tests | grep 'py$'); do
-    echo "Test: $test..."
-    TEST_FILE="tests/$test"
+for test in $(find tests -name '*.py' | sort); do
+    echo -n "Test: $test... "
 
-    OUT_FILE="${TEST_FILE%.*}.out"
+    OUT_FILE="${test%.*}.out"
     if [ -f "$OUT_FILE" ]; then
         cat "$OUT_FILE"
     fi > "$TMPDIR/ans"
 
-    if ! python3 "$TEST_FILE" </dev/null >"$TMPDIR/out" 2>/dev/null; then
+    python3 "$test" </dev/null >"$TMPDIR/out" 2>/dev/null
+    RESULT=$?
+
+    if ! [ "x$RESULT" = x0 ]; then
+        echo FAIL
         echo
-        echo "TEST FAILED: $test"
+        echo "EXIT CODE $RESULT: $test"
         echo
     elif ! diff -b -q "$TMPDIR/ans" "$TMPDIR/out" >/dev/null; then
+        echo FAIL
         echo
         echo "INCORRECT OUTPUT: $test"
         echo
         diff -b --color=auto "$TMPDIR/ans" "$TMPDIR/out"
+    else
+        echo OK
     fi
 done
