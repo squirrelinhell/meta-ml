@@ -1,7 +1,7 @@
 
 import mandalka
 
-from . import World, Episode
+from . import World
 
 class BaseTable(World):
     def _build(self, **kwargs): # -> (inputs, labels)
@@ -28,32 +28,11 @@ class BaseTable(World):
         self.get_observation_shape = lambda: inputs[0].shape
         self.get_action_shape = lambda: labels[0].shape
         self.get_reward_shape = lambda: labels[0].shape
-        self.start_episode = lambda seed: Ep(
-            inputs[seed % len(inputs)],
-            labels[seed % len(inputs)]
-        )
 
-class Ep(Episode):
-    def __init__(self, inp, label):
-        import numpy as np
+        def after_episode(agent, seed):
+            i = seed % len(inputs)
+            pred = np.asarray(agent.action_batch(inputs[i:i+1])[0])
+            assert pred.shape == labels[i].shape
+            return (self, [(inputs[i], pred, labels[i] - pred)])
 
-        done = False
-
-        def next_observation():
-            if done:
-                raise StopIteration
-
-            return inp
-
-        def step(action):
-            nonlocal done
-            if done:
-                raise StopIteration
-            done = True
-
-            action = np.asarray(action)
-            assert action.shape == label.shape
-            return label - action
-
-        self.next_observation = next_observation
-        self.step = step
+        self.after_episode = after_episode

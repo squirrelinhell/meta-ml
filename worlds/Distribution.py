@@ -1,28 +1,26 @@
 
 import mandalka
 
-from . import World, Episode
+from . import World
+from agents import AsDistribution
 
 @mandalka.node
 class Distribution(World):
     def __init__(self, world):
-        super().__init__(world)
-        self.start_episode = lambda seed: Ep(world, seed)
-
-class Ep(Episode):
-    def __init__(self, world, seed):
         import numpy as np
 
-        ep = world.start_episode(seed)
+        self.get_observation_shape = lambda: world.o_shape
+        self.get_action_shape = lambda: world.a_shape
+        self.get_reward_shape = lambda: world.r_shape
 
-        def step(action):
-            # Safely calculate softmax
-            action = np.asarray(action)
-            action = np.exp(action - np.max(action))
-            action /= action.sum()
+        dist_agents = {}
 
-            # Cross entropy gradient
-            return ep.step(action)
+        def after_episode(agent, seed):
+            if agent not in dist_agents:
+                dist_agents[agent] = AsDistribution(agent)
 
-        self.next_observation = ep.next_observation
-        self.step = step
+            w2, exp = world.after_episode(dist_agents[agent], seed)
+
+            return self if w2 == world else Distribution(w2), exp
+
+        self.after_episode = after_episode

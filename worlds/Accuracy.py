@@ -1,29 +1,30 @@
 
 import mandalka
 
-from . import World, Episode
+from . import World
 
 @mandalka.node
 class Accuracy(World):
     def __init__(self, world):
-        super().__init__(world)
-        self.start_episode = lambda seed: Ep(world, seed)
-
-class Ep(Episode):
-    def __init__(self, world, seed):
         import numpy as np
 
-        ep = world.start_episode(seed)
+        self.get_observation_shape = lambda: world.o_shape
+        self.get_action_shape = lambda: world.a_shape
+        self.get_reward_shape = lambda: (1,)
 
-        def step(action):
-            one_hot = action * 0.0
-            one_hot.flat[np.argmax(action)] = 1.0
-            reward = ep.step(one_hot)
+        assert world.a_shape == world.r_shape
 
-            if np.sum(np.abs(reward)) < 0.01:
-                return 1.0
-            else:
-                return 0.0
+        def process_exp(o, a, r):
+            assert a.shape == r.shape
+            answer = np.argmax(a)
+            wanted = np.argmax(a + r)
+            return o, a, [1.0] if answer == wanted else [0.0]
 
-        self.next_observation = ep.next_observation
-        self.step = step
+        def after_episode(agent, seed):
+            w2, exp = world.after_episode(agent, seed)
+
+            exp = [process_exp(*e) for e in exp]
+
+            return self if w2 == world else Accuracy(w2), exp
+
+        self.after_episode = after_episode

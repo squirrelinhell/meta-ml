@@ -1,131 +1,180 @@
 
-from . import Episode
-from .BasePolicy import BasePolicy
+import mandalka
 
-class BaseTFPolicy(BasePolicy):
+from . import World
+from agents import Agent
+
+class BaseTFPolicy(World, Agent):
     def _policy(self, o_batch, a_shape, params, **kwargs): # -> a_batch
         raise NotImplementedError("_policy")
 
-    def __init__(self, world,
-            batch_size=128,
-            normalize_rewards=False,
-            **kwargs):
+    def __init__(self, world, ep_len=1000, after=None, **kwargs):
         import tensorflow as tf
         import numpy as np
 
-        super().__init__(world, batch_size, normalize_rewards)
+        assert world.r_shape == world.a_shape
 
-        # Prepare parameters
-        params = Parameters()
-        n_params = 0
-        self.get_observation_shape = (1,)
+        def build_graph():
+            params = Parameters()
+
+            # Build policy graph
+            o_batch = tf.placeholder(
+                tf.float32,
+                (None,) + world.o_shape,
+                name="o_batch"
+            )
+            a_batch = tf.reshape(
+                self._policy(o_batch, world.a_shape, params, **kwargs),
+                (-1,) + world.a_shape,
+                name="a_batch"
+            )
+
+            # Backpropagation
+            a_grad = tf.placeholder(
+                tf.float32,
+                a_batch.shape,
+                name="a_grad"
+            )
+            intermediate_reward = tf.reduce_sum(tf.reduce_mean(
+                tf.multiply(a_grad, a_batch),
+                axis=0
+            ))
+            grad = tf.gradients(
+                intermediate_reward,
+                params.get_tensor()
+            )[0]
+            tf.identity(grad, name="params_grad")
+
+        def build_session():
+            graph = tf.Graph()
+            with graph.as_default():
+                build_graph()
+
+            sess = tf.Session(graph=graph)
+            tf.reset_default_graph()
+
+            # Add easy access to variables by name
+            sess.names = dict()
+            for op in graph.get_operations():
+                sess.names[op.name] = op
+                for t in op.outputs:
+                    sess.names[t.name.split(":")[0]] = t
+
+            tf.Session.__getattr__ = (
+                lambda self, name: self.names.get(name)
+            )
+
+            return sess
+
+        if after is None:
+            sess = build_session()
+        else:
+            sess = after[0]._get_session()
+
+        params_value = None
+        n_params = sess.params.shape[0].value
         self.get_action_shape = lambda: (n_params,)
         self.get_reward_shape = lambda: (n_params,)
 
-        # Build policy graph
-        o_batch = tf.placeholder(
-            tf.float32,
-            (None,) + world.o_shape
-        )
-        a_batch = tf.reshape(
-            self._policy(o_batch, world.a_shape, params, **kwargs),
-            (-1,) + world.a_shape
-        )
+        def step(meta_agent, seed):
+            nonlocal params_value
 
-        # Get parameter vector
-        n_params = params.size
-        params = params.get_tensor()
+            # Gather experience by running policy with current
+            # parameters as an agent in the underlying world
+            w2, exp = world.after_episode(self, seed)
 
-        # Backpropagation
-        a_grad = tf.placeholder(tf.float32, a_batch.shape)
-        intermediate_reward = tf.reduce_sum(tf.reduce_mean(
-            tf.multiply(a_grad, a_batch),
-            axis=0
-        ))
-        p_grad = tf.gradients(intermediate_reward, params)[0]
+            # Get average parameter gradient of this experience batch
+            # (it's OK to ignore actions, because they are exactly
+            # the same as generated from current parameters)
+            assert len(exp) >= 1
+            o, a, r = zip(*exp)
+            params_grad = sess.run(
+                sess.params_grad,
+                feed_dict={
+                    sess.params: params_value,
+                    sess.o_batch: o,
+                    sess.a_grad: r
+                }
+            )
 
-        # Operations to modify parameter vector
-        init_op = tf.variables_initializer([params])
-        add_value = tf.placeholder(params.dtype, params.shape)
-        add_op = tf.assign_add(params, add_value)
+            # Compute new policy parameters
+            params_grad = params_grad.reshape((1, n_params))
+            params_update = meta_agent.action_batch(params_grad)[0]
+            params_value += params_update
 
-        def start_episode(seed):
-            tf.set_random_seed(seed)
-            rng = np.random.RandomState(seed)
+        def action_batch(o):
+            return sess.run(
+                sess.a_batch,
+                feed_dict={
+                    sess.params: params_value,
+                    sess.o_batch: o
+                }
+            )
 
-            sess = tf.Session()
-            sess.run(init_op)
+        self.action_batch = action_batch
 
-            ep_len = 0.0
+        def init_params():
+            nonlocal params_value
 
-            def step(action):
-                nonlocal ep_len
+            if after is None:
+                params_value = np.random.randn(n_params)
+            else:
+                prev, agent, seed = after
+                rng = np.random.RandomState(seed)
+                params_value = prev._get_params_value()
+                for _ in range(ep_len):
+                    step(agent, rng.randint(2**32))
 
-                sess.run(
-                    add_op,
-                    feed_dict={add_value: action}
-                )
+        init_params()
 
-                history, ep_len = self._test_policy(
-                    rng.randint(2**32, size=batch_size),
-                    lambda o: sess.run(
-                        a_batch,
-                        feed_dict={o_batch: o}
-                    )
-                )
+        def after_episode(agent, seed):
+            return self.__class__(
+                world,
+                ep_len,
+                after=(self, agent, seed),
+                **kwargs
+            ), []
 
-                o, a, r = zip(*history)
-                return sess.run(
-                    p_grad,
-                    feed_dict={o_batch: o, a_grad: r}
-                )
-
-            def solve(o):
-                return sess.run(
-                    a_batch,
-                    feed_dict={o_batch: [o]}
-                )[0]
-
-            ep = Episode()
-            ep.next_observation = lambda: [ep_len]
-            ep.step = step
-            ep.solve = solve
-            return ep
-
-        self.start_episode = start_episode
+        self.after_episode = after_episode
+        self._get_params_value = lambda: params_value
+        self._get_session = lambda: sess
 
 class Parameters:
     def __init__(self):
         import tensorflow as tf
         import numpy as np
 
-        params = None
-        param_pos = 0
+        tensor = None
+        size = None
+        pos = 0
 
         def alloc(n_params):
-            nonlocal params
-            assert params is None
-            params = tf.Variable(tf.truncated_normal(
-                stddev = 1.0,
-                shape = (n_params,),
-                dtype = tf.float32
-            ))
-            self.size = n_params
+            nonlocal tensor, size
+            assert tensor is None
+            tensor = tf.placeholder(
+                tf.float32,
+                n_params,
+                name="params"
+            )
+            size = n_params
 
         def next_normal(shape):
-            nonlocal param_pos
-            size = np.prod(shape)
-            ret = params[param_pos:param_pos+size]
-            param_pos += size
+            nonlocal pos
+            l = np.prod(shape)
+            ret = tensor[pos:pos+l]
+            pos += l
             return tf.reshape(ret, shape)
 
-        def get_tensor():
-            assert params is not None
-            assert param_pos == self.size, (
-                "Expected %d parameters" % param_pos
-            )
-            return params
+        def get_size():
+            assert tensor is not None
+            if pos != size:
+                raise ValueError(
+                    "Model used %d instead of %d parameters"
+                        % (pos, size)
+                )
+            return size
 
         self.alloc = alloc
         self.next_normal = next_normal
-        self.get_tensor = get_tensor
+        self.get_size = get_size
+        self.get_tensor = lambda: (get_size(), tensor)[1]

@@ -1,11 +1,5 @@
 
 class World:
-    def __init__(self, world=None):
-        if world is not None:
-            self.get_observation_shape = world.get_observation_shape
-            self.get_action_shape = world.get_action_shape
-            self.get_reward_shape = world.get_reward_shape
-
     def get_observation_shape(self): # -> shape [tuple of int] or None
         return None
 
@@ -15,9 +9,12 @@ class World:
     def get_reward_shape(self): # -> shape [tuple of int]
         raise NotImplementedError("get_reward_shape")
 
-    def start_episode(self, seed): # -> state
+    def after_episode(self, agent, seed): # -> (world, experience)
+        # Iterating over experience should return tuples:
+        # (observation, action, reward)
         raise NotImplementedError("start_episode")
 
+    # For convenience only
     def __getattr__(self, name):
         if name in ("o_shape", "observation_shape"):
             return self.get_observation_shape()
@@ -27,22 +24,8 @@ class World:
             return self.get_reward_shape()
         return object.__getattribute__(self, name)
 
-class Episode:
-    def next_observation(self): # -> observation [ndarray] or None
-        raise StopIteration
-
-    def step(self, action): # -> reward [ndarray]
-        raise NotImplementedError("step")
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return self.next_observation()
-
 from .Accuracy import Accuracy
+from .Batch import Batch
 from .Distribution import Distribution
-from .Gym import Gym
 from .Mnist import Mnist
 from .PolicyNet import PolicyNet
-from .Reinforce import Reinforce
