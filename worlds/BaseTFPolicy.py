@@ -1,7 +1,4 @@
 
-import numpy as np
-import tensorflow as tf
-
 from . import Episode
 from .BasePolicy import BasePolicy
 
@@ -13,6 +10,9 @@ class BaseTFPolicy(BasePolicy):
             batch_size=128,
             normalize_rewards=False,
             **kwargs):
+        import tensorflow as tf
+        import numpy as np
+
         super().__init__(world, batch_size, normalize_rewards)
 
         # Prepare parameters
@@ -96,6 +96,9 @@ class BaseTFPolicy(BasePolicy):
 
 class Parameters:
     def __init__(self):
+        import tensorflow as tf
+        import numpy as np
+
         params = None
         param_pos = 0
 

@@ -1,15 +1,16 @@
 
-import gym
-import gym.spaces
-import numpy as np
 import mandalka
-import threading
 
 from . import World, Episode
 
 @mandalka.node
 class Gym(World):
     def __init__(self, env_name):
+        import gym
+        import gym.spaces
+        import numpy as np
+        import threading
+
         envs = [gym.make(str(env_name))]
         lock = threading.Lock()
 
@@ -66,6 +67,8 @@ class Gym(World):
 
 class Ep(Episode):
     def __init__(self, env, on_end, process_obs, process_action):
+        import numpy as np
+
         obs = env.reset()
 
         def next_observation():

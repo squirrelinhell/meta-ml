@@ -1,7 +1,5 @@
 
-import os
 import mandalka
-import numpy as np
 
 from . import World, Episode
 
@@ -10,12 +8,15 @@ class BaseTable(World):
         raise NotImplementedError("_build")
 
     def __init__(self, **kwargs):
+        import os
+        import numpy as np
+
         path = ("__cache__/" + self.__class__.__name__.lower()
             + "_" + mandalka.unique_id(self))
 
         if os.path.exists(path):
-            inputs = np.load(path + "/inputs.npy")
-            labels = np.load(path + "/labels.npy")
+            inputs = np.load(path + "/inputs.npy", mmap_mode="r")
+            labels = np.load(path + "/labels.npy", mmap_mode="r")
         else:
             os.makedirs(path + ".tmp", exist_ok=True)
             inputs, labels = self._build(**kwargs)
@@ -34,6 +35,8 @@ class BaseTable(World):
 
 class Ep(Episode):
     def __init__(self, inp, label):
+        import numpy as np
+
         done = False
 
         def next_observation():

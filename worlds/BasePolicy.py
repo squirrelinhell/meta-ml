@@ -1,8 +1,4 @@
 
-import sys
-import numpy as np
-import tensorflow as tf
-
 from . import World, Episode
 
 class BasePolicy(World):
@@ -11,6 +7,8 @@ class BasePolicy(World):
             batch_size=128,
             normalize_rewards=False,
             **kwargs):
+        import sys
+        import numpy as np
 
         # eval_batch(o_batch) -> a_batch
 

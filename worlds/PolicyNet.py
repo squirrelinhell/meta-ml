@@ -1,7 +1,5 @@
 
 import mandalka
-import numpy as np
-import tensorflow as tf
 
 from .BaseTFPolicy import BaseTFPolicy
 
@@ -9,6 +7,9 @@ from .BaseTFPolicy import BaseTFPolicy
 class PolicyNet(BaseTFPolicy):
     def _policy(self, o_batch, a_shape, params,
             hidden_layers=[128]):
+        import numpy as np
+        import tensorflow as tf
+
         o_size = np.prod(o_batch.shape.as_list()[1:])
         a_size = np.prod(a_shape)
 

@@ -1,13 +1,12 @@
 
-import numpy as np
 import mandalka
-import tensorflow.examples.tutorials.mnist as tf_mnist
 
 from .BaseTable import BaseTable
 
 @mandalka.node
 class Mnist(BaseTable):
     def _build(self, test=False):
+        import tensorflow.examples.tutorials.mnist as tf_mnist
         data = tf_mnist.input_data.read_data_sets(
             "/tmp/mnist-download",
             validation_size=0,

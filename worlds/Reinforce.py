@@ -1,5 +1,4 @@
 
-import numpy as np
 import mandalka
 
 from . import World, Episode
@@ -17,6 +16,8 @@ class Reinforce(World):
 
 class Ep(Episode):
     def __init__(self, world, seed, test):
+        import numpy as np
+
         rng = np.random.RandomState(seed)
         ep = world.start_episode(rng.randint(2**32))
 
