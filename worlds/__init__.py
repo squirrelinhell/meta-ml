@@ -25,7 +25,6 @@ class World:
         return object.__getattribute__(self, name)
 
 from .Accuracy import Accuracy
-from .Batch import Batch
 from .Distribution import Distribution
 from .Mnist import Mnist
 from .PolicyNet import PolicyNet

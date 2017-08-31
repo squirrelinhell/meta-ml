@@ -6,32 +6,38 @@ np.set_printoptions(precision=3, suppress=True)
 import sys
 import mandalka
 
-from worlds import Mnist, Accuracy, Batch, Distribution, PolicyNet
-
-train = Distribution(Batch(Mnist(), batch_size=128))
+from worlds import Mnist, Accuracy, Distribution, PolicyNet
 
 def norm(v):
     return np.sqrt(np.sum(np.square(v)))
 
-def score(agent):
-    test = Accuracy(Mnist(test=True))
-    acc_sum = 0.0
-    n_samples = 0
-    for i in range(1000):
+def score(world, agent, n_episodes=100):
+    total_sum = 0.0
+    for i in range(n_episodes):
+        ep_sum = 0.0
+        ep_samples = 0
         _, exp = test.after_episode(agent, i)
         for o, a, r in exp:
-            acc_sum += np.mean(r)
-            n_samples += 1
-    return acc_sum / n_samples
+            ep_sum += np.mean(r)
+            ep_samples += 1
+        total_sum += ep_sum / ep_samples
+    return total_sum / n_episodes
+
+test = Accuracy(Mnist(test=True))
+train = Distribution(Mnist())
 
 @mandalka.node
 class RandomAnswer:
     def action_batch(self, o_batch):
-        ans = np.zeros(10)
-        ans[np.random.choice(10)] = 1.0
-        return np.asarray([ans])
+        ans = np.zeros((len(o_batch), 10))
+        idx = np.stack((
+            np.arange(len(ans)),
+            np.random.choice(10, size=len(ans))
+        )).T
+        ans[idx] = 1.0
+        return ans
 
-acc = score(RandomAnswer())
+acc = score(test, RandomAnswer())
 sys.stderr.write("Random choice accuracy: %.1f%%\n" % (acc * 100.0))
 assert acc > 0.05
 assert acc < 0.15
@@ -49,7 +55,7 @@ class GradAscend:
 policy = PolicyNet(train, ep_len=500)
 policy, _ = policy.after_episode(GradAscend(), 0)
 
-acc = score(policy)
+acc = score(test, policy)
 sys.stderr.write("Neural net accuracy: %.1f%%\n" % (acc * 100.0))
 assert acc > 0.9
 assert acc < 1.0

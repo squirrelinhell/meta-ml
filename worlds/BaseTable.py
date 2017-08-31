@@ -7,7 +7,7 @@ class BaseTable(World):
     def _build(self, **kwargs): # -> (inputs, labels)
         raise NotImplementedError("_build")
 
-    def __init__(self, **kwargs):
+    def __init__(self, batch_size=128, **kwargs):
         import os
         import numpy as np
 
@@ -30,9 +30,25 @@ class BaseTable(World):
         self.get_reward_shape = lambda: labels[0].shape
 
         def after_episode(agent, seed):
-            i = seed % len(inputs)
-            pred = np.asarray(agent.action_batch(inputs[i:i+1])[0])
-            assert pred.shape == labels[i].shape
-            return (self, [(inputs[i], pred, labels[i] - pred)])
+            assert batch_size >= 1
+
+            # Avoid PRNG initialization in case of 1-element batch
+            if batch_size == 1:
+                idx = [seed % len(inputs)]
+            else:
+                rng = np.random.RandomState(seed)
+                idx = rng.randint(len(inputs), size=batch_size)
+
+            # Request predictions from the agent
+            pred = np.asarray(agent.action_batch(inputs[idx]))
+            assert pred.shape == (batch_size,) + labels[0].shape
+
+            # If predictions are from softmax, cross entropy
+            # gradient is equal to (label - prediction)
+            exp = [
+                (inputs[i], p, labels[i] - p)
+                for i, p in zip(idx, pred)
+            ]
+            return self, exp
 
         self.after_episode = after_episode
