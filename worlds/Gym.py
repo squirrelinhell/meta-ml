@@ -5,8 +5,7 @@ from . import World
 
 @mandalka.node
 class Gym(World):
-    def __init__(self, env_name,
-            normalize_rewards=True, batch_size=16):
+    def __init__(self, env_name, normalize_rewards=True):
         import gym
         import gym.spaces
         import numpy as np
@@ -63,7 +62,7 @@ class Gym(World):
         else:
             raise ValueError("Unsupported action space")
 
-        def after_episode(agent, seed):
+        def after_episode(agent, seed, batch_size=1):
             envs = [get_env() for _ in range(batch_size)]
             rewards = [0.0] * len(envs)
             ep_lengths = [0] * len(envs)

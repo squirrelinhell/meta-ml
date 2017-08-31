@@ -36,6 +36,7 @@ for test in $(find tests -name '*.py' | sort); do
         echo "INCORRECT OUTPUT: $test"
         echo
         diff -b --color=auto "$TMPDIR/ans" "$TMPDIR/out"
+        echo
     else
         echo OK
     fi

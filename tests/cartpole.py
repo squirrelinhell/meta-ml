@@ -6,17 +6,16 @@ np.set_printoptions(precision=3, suppress=True)
 import sys
 import mandalka
 
-from worlds import Gym, Reinforce, Distribution, PolicyNet
+from worlds import Gym, Reinforce, Distribution, Batch, PolicyNet
 from agents import Agent, RandomChoice, SampleFromPolicy, Softmax
 
 def norm(v):
     return np.sqrt(np.sum(np.square(v)))
 
 def score(agent, n_episodes=3, batch_size=16):
-    world = Gym(
-        "CartPole-v1",
-        batch_size=batch_size,
-        normalize_rewards=False
+    world = Batch(
+        Gym("CartPole-v1", normalize_rewards=False),
+        batch_size
     )
     rew_sum = 0.0
     for i in range(n_episodes):
@@ -39,7 +38,7 @@ class GradAscend(Agent):
 
 def train_policy(problem, seed):
     policy = PolicyNet(
-        Distribution(Reinforce(problem)),
+        Distribution(Reinforce(Batch(problem, 16))),
         init_seed=1,
         ep_len=6
     )
@@ -52,7 +51,7 @@ def test1():
     s = score(RandomChoice(world))
     sys.stderr.write("Reward/episode (random agent): %.5f\n" % s)
 
-    print("Random agent sanity check:", s >= 16.0, s <= 26.0)
+    print("Random agent sanity check:", s >= 15.0, s <= 30.0)
 
 def test2():
     world = Gym("CartPole-v1")

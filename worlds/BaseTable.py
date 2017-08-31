@@ -7,7 +7,7 @@ class BaseTable(World):
     def _build(self, **kwargs): # -> (inputs, labels)
         raise NotImplementedError("_build")
 
-    def __init__(self, batch_size=128, **kwargs):
+    def __init__(self, **kwargs):
         import os
         import numpy as np
 
@@ -29,7 +29,7 @@ class BaseTable(World):
         self.get_action_shape = lambda: labels[0].shape
         self.get_reward_shape = lambda: labels[0].shape
 
-        def after_episode(agent, seed):
+        def after_episode(agent, seed, batch_size=1):
             assert batch_size >= 1
 
             # Avoid PRNG initialization in case of 1-element batch

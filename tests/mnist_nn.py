@@ -6,27 +6,24 @@ np.set_printoptions(precision=3, suppress=True)
 import sys
 import mandalka
 
-from worlds import Mnist, Accuracy, Distribution, PolicyNet
+from worlds import Mnist, Accuracy, Distribution, Batch, PolicyNet
 from agents import Agent, RandomChoice
 
 def norm(v):
     return np.sqrt(np.sum(np.square(v)))
 
-def score(world, agent, n_episodes=100):
-    total_sum = 0.0
-    for i in range(n_episodes):
-        ep_sum = 0.0
-        ep_samples = 0
-        _, exp = world.after_episode(agent, i)
-        for o, a, r in exp:
-            ep_sum += np.mean(r)
-            ep_samples += 1
-        total_sum += ep_sum / ep_samples
-    return total_sum / n_episodes
+def score(agent, n_episodes=1000):
+    world = Accuracy(
+        Batch(Mnist(test=True), n_episodes)
+    )
+    rew_sum = 0.0
+    for o, a, r in world.after_episode(agent, 0)[1]:
+        rew_sum += np.mean(r)
+    return rew_sum / n_episodes
 
 @mandalka.node
 class GradAscend(Agent):
-    lr = 200.0
+    lr = 250.0
 
     def action_batch(self, o_batch):
         upd = o_batch * GradAscend.lr
@@ -37,17 +34,16 @@ class GradAscend(Agent):
         return upd
 
 def test():
-    test = Accuracy(Mnist(test=True))
-    train = Distribution(Mnist())
+    train = Distribution(Batch(Mnist(), 128))
 
-    acc = score(test, RandomChoice(train))
+    acc = score(RandomChoice(train))
     sys.stderr.write("Random choice accuracy: %.1f%%\n" % (acc * 100.0))
     print("Random choice sanity check:", acc > 0.05, acc < 0.15)
 
-    policy = PolicyNet(train, init_seed=1, ep_len=500)
+    policy = PolicyNet(train, init_seed=1, ep_len=200)
     policy, _ = policy.after_episode(GradAscend(), 0)
 
-    acc = score(test, policy)
+    acc = score(policy)
     sys.stderr.write("Neural net accuracy: %.1f%%\n" % (acc * 100.0))
     print("Neural net sanity check:", acc > 0.9, acc < 1.0)
 
