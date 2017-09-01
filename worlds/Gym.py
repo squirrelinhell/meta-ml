@@ -91,5 +91,20 @@ class Gym(World):
 
             return trajs
 
+        def render(agent):
+            env = get_env()
+            env.render()
+
+            obs = process_obs(env.reset())
+            done = False
+            while not done:
+                obs, rew, done, _ = env.step(
+                    process_action(agent.action(obs))
+                )
+                env.render()
+
+            return_env(env)
+
         self.trajectory_batch = trajectory_batch
-        self.build_agent = lambda a: a
+        self.inner_agent = lambda a, s: a
+        self.render = render

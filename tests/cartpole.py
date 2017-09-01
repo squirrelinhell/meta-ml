@@ -1,16 +1,13 @@
 
 import timer
+import os
 import sys
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-from worlds import (
-    Gym, Reinforce, Distribution, WholeTrajectories, PolicyNet
-)
-from agents import Agent, RandomChoice
-
-def norm(v):
-    return np.sqrt(np.sum(np.square(v)))
+from worlds import *
+from agents import *
+assert timer.t() < 0.15
 
 def score(agent, n_episodes=128, batch_size=16):
     world = Gym("CartPole-v1")
@@ -23,31 +20,19 @@ def score(agent, n_episodes=128, batch_size=16):
         done += batch_size
     return rew_sum / done
 
-class GradAscend(Agent):
-    def __init__(self, world, lr):
-        assert world.rew_shape == world.act_shape
-        values = np.random.randn(*world.act_shape)
+class LearningRate(Agent):
+    def __init__(self, magnitude=0.8):
+        def action(o):
+            sys.stderr.write("Gradient fitness: %6.2f\n" % o[0])
+            return [magnitude]
+        self.action = action
 
-        def learn(traj):
-            nonlocal values
-            for o, a, r in traj:
-                upd = r * lr
-                sys.stderr.write("Update norm: %.8f\n" % norm(upd))
-                values += upd
-
-        self.action = lambda _: values
-        self.learn = learn
-
-def train_policy(problem):
-    policy_world = PolicyNet(
-        Distribution(Reinforce(WholeTrajectories(problem))),
-        batch_size=16
-    )
-    params = GradAscend(policy_world, 2000)
-    for i in range(8):
-        params.learn(policy_world.trajectory(params, i))
-
-    return policy_world.build_agent(params)
+def solve(problem):
+    problem = WholeTrajectories(problem)
+    problem = Distribution(Reinforce(problem))
+    problem = PolicyNet(problem, batch_size=16)
+    problem = GradAscent(problem, n_steps=8)
+    return problem.inner_agent(LearningRate(), 0)
 
 def test1():
     world = Gym("CartPole-v1")
@@ -61,12 +46,17 @@ def test2():
     world = Gym("CartPole-v1")
     scores = []
 
-    policy = train_policy(world)
+    policy = solve(world)
     s = score(policy)
     sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
 
     print("Policy network sanity check:", s >= 50.0)
 
+    if "DEBUG" in os.environ:
+        for _ in range(5):
+            world.render(policy)
+    else:
+        assert timer.t() < 8.0
+
 test1()
 test2()
-assert timer.t() < 8.0

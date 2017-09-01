@@ -35,7 +35,7 @@ class World:
 
         return [self.trajectory(agent, s) for s in seed_batch]
 
-    def build_agent(outer_agent): # -> {Agent}
+    def inner_agent(self, agent, seed): # -> {Agent}
         raise NotImplementedError("inner_agent")
 
     # For convenience only

@@ -1,7 +1,7 @@
 
 from . import Agent
 
-class PolicyChoice(Agent):
+class DistributionChoice(Agent):
     def __init__(self, agent):
         import numpy as np
 

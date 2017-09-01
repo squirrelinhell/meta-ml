@@ -22,4 +22,6 @@ class Distribution(World):
             return world.trajectory_batch(sm_agents[agent], seed_batch)
 
         self.trajectory_batch = trajectory_batch
-        self.build_agent = lambda a: world.build_agent(Softmax(a))
+        self.inner_agent = lambda a, s: world.inner_agent(
+            Softmax(a), s
+        )

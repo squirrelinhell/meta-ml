@@ -2,7 +2,7 @@
 import mandalka
 
 from . import World
-from agents import PolicyChoice
+from agents import DistributionChoice
 
 @mandalka.node
 class Reinforce(World):
@@ -32,10 +32,12 @@ class Reinforce(World):
 
         def trajectory_batch(agent, seed_batch):
             trajs = world.trajectory_batch(
-                PolicyChoice(agent),
+                DistributionChoice(agent),
                 seed_batch
             )
             return [process_traj(agent, t) for t in trajs]
 
         self.trajectory_batch = trajectory_batch
-        self.build_agent = lambda a: world.build_agent(PolicyChoice(a))
+        self.inner_agent = lambda a, s: world.inner_agent(
+            DistributionChoice(a), s
+        )
