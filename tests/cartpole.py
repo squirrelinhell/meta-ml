@@ -9,47 +9,29 @@ from worlds import *
 from agents import *
 assert timer.t() < 0.15
 
-def score(agent, n_episodes=128, batch_size=16):
-    world = Gym("CartPole-v1")
-    rew_sum = 0.0
-    done = 0
-    while done < n_episodes:
-        for traj in world.trajectory_batch(agent, range(batch_size)):
-            for o, a, r in traj:
-                rew_sum += np.mean(r)
-        done += batch_size
-    return rew_sum / done
-
-class LearningRate(Agent):
-    def __init__(self, magnitude=0.8):
-        def action(o):
-            sys.stderr.write("Learning score: %6.2f\n" % o[0])
-            return [magnitude]
-        self.action = action
-
 def solve(problem):
-    problem = Policy(problem, batch_size=16)
-    problem = Distribution(Reinforce(problem))
-    problem = BasicNet(problem, hidden_layers=[128])
+    problem = Reinforce(Policy(problem, batch_size=16))
+    problem = BasicNet(Distribution(problem), hidden_layers=[128])
     problem = GradAscent(problem, n_steps=8)
-    return problem.inner_agent(LearningRate(), 0)
+    return problem.inner_agent(Repeat([0.8]), 0)
+
+def score(agent):
+    world = Batch(Batch(Gym("CartPole-v1"), 16), 8) # 128 episodes
+    rew_sum = 0.0
+    for o, a, r in world.trajectory(agent, 0):
+        rew_sum += np.mean(r)
+    return rew_sum / 128.0
 
 def test1():
-    world = Gym("CartPole-v1")
-
-    s = score(RandomChoice(world))
+    agent = RandomChoice(Gym("CartPole-v1"))
+    s = score(agent)
     sys.stderr.write("Reward/episode (random agent): %.5f\n" % s)
-
     print("Random agent sanity check:", s >= 15.0, s <= 30.0)
 
 def test2():
-    world = Gym("CartPole-v1")
-    scores = []
-
-    policy = solve(world)
-    s = score(policy)
+    agent = solve(Gym("CartPole-v1"))
+    s = score(agent)
     sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
-
     print("Policy network sanity check:", s >= 50.0)
 
     if "DEBUG" in os.environ:
