@@ -56,14 +56,11 @@ def test2():
     world = Gym("CartPole-v1")
     scores = []
 
-    for i in range(3):
-        s = score(train_policy(world, i))
-        scores.append(s)
-        sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
+    s = score(train_policy(world, 0))
+    sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
 
-    scores = sorted(scores)
-    print("Policy network sanity check:", scores[1] >= 60.0)
+    print("Policy network sanity check:", s >= 60.0)
 
 test1()
 test2()
-assert timer.t() < 12.0
+assert timer.t() < 6.0
