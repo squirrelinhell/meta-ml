@@ -6,15 +6,15 @@ from agents import Agent
 
 class BaseTFModel(World):
     def _action_batch(self, obs_batch, act_shape, params, **kwargs):
-        raise NotImplementedError("_policy")
+        raise NotImplementedError("_action_batch")
 
-    def __init__(self, world, batch_size=128, **kwargs):
+    def __init__(self, world, **kwargs):
         import tensorflow as tf
         import numpy as np
 
         assert world.rew_shape == world.act_shape
 
-        # Build policy graph
+        # Build graph
         params = Parameters()
         obs_batch = tf.placeholder(
             tf.float32,
@@ -52,7 +52,7 @@ class BaseTFModel(World):
         self.get_action_shape = lambda: (n_params,)
         self.get_reward_shape = lambda: (n_params,)
 
-        class InnerAgent(Agent):
+        class ParamsAgent(Agent):
             def __init__(self, params_value):
                 def action_batch(feed_obs_batch):
                     return sess.run(
@@ -65,27 +65,16 @@ class BaseTFModel(World):
                 self.action_batch = action_batch
 
         def trajectory(outer_agent, seed):
-            # Generate seeds for the whole batch
-            rng = np.random.RandomState(seed)
-            seed_batch = rng.randint(2**32, size=batch_size)
-
             # Get parameters from the outer agent
             params_value = outer_agent.action(None)
+            params_agent = ParamsAgent(params_value)
 
-            # Gather experience by running policy with current
-            # parameters as an agent in the underlying world
-            inner_agent = InnerAgent(params_value)
-            trajs = world.trajectory_batch(inner_agent, seed_batch)
-
-            # Concatenate experience lists
-            # IMPORTANT: We ignore actions, so this only works
-            # if the underlying world is strictly on-policy
-            all_obs = []
-            all_rew = []
-            for traj in trajs:
-                for o, a, r in traj:
-                    all_obs.append(o)
-                    all_rew.append(r)
+            # IMPORTANT: Actions in experience list are assumed
+            # to be the same as generated from ParamsAgent.
+            # So learning only works if the underlying world
+            # is strictly on-policy.
+            traj = world.trajectory(params_agent, seed)
+            all_obs, _, all_rew = zip(*traj)
 
             # Backpropagate gradient to parameters
             grad = sess.run(
@@ -101,7 +90,7 @@ class BaseTFModel(World):
 
         self.trajectory = trajectory
         self.inner_agent = lambda a, s: world.inner_agent(
-            InnerAgent(a.action(None)), s
+            ParamsAgent(a.action(None)), s
         )
 
 class Parameters:

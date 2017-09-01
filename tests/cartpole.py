@@ -23,14 +23,14 @@ def score(agent, n_episodes=128, batch_size=16):
 class LearningRate(Agent):
     def __init__(self, magnitude=0.8):
         def action(o):
-            sys.stderr.write("Gradient fitness: %6.2f\n" % o[0])
+            sys.stderr.write("Learning score: %6.2f\n" % o[0])
             return [magnitude]
         self.action = action
 
 def solve(problem):
-    problem = Policy(problem)
+    problem = Policy(problem, batch_size=16)
     problem = Distribution(Reinforce(problem))
-    problem = BasicNet(problem, hidden_layers=[128], batch_size=16)
+    problem = BasicNet(problem, hidden_layers=[128])
     problem = GradAscent(problem, n_steps=8)
     return problem.inner_agent(LearningRate(), 0)
 
@@ -56,7 +56,7 @@ def test2():
         for _ in range(5):
             world.render(policy)
     else:
-        assert timer.t() < 8.0
+        assert timer.t() < 9.0
 
 test1()
 test2()

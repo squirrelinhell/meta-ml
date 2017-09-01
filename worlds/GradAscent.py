@@ -6,7 +6,7 @@ from agents import Repeat
 
 @mandalka.node
 class GradAscent(World):
-    def __init__(self, world, n_steps=100):
+    def __init__(self, world, n_steps):
         import numpy as np
 
         self.get_observation_shape = lambda: (1,)

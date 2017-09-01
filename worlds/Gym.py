@@ -5,7 +5,7 @@ from . import World
 
 @mandalka.node
 class Gym(World):
-    def __init__(self, env_name, normalize_rewards=True):
+    def __init__(self, env_name):
         import gym
         import gym.spaces
         import numpy as np
