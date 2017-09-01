@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 
-import numpy as np
-np.set_printoptions(precision=3, suppress=True)
-
+import timer
 import sys
 import mandalka
+import numpy as np
+np.set_printoptions(precision=3, suppress=True)
 
 from worlds import Gym, Reinforce, Distribution, Batch, PolicyNet
 from agents import Agent, RandomChoice, SampleFromPolicy, Softmax
@@ -67,3 +66,4 @@ def test2():
 
 test1()
 test2()
+assert timer.t() < 12.0

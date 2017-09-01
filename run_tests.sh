@@ -22,16 +22,18 @@ for test in $(find tests -name '*.py' | sort); do
         cat "$OUT_FILE"
     fi > "$TMPDIR/ans"
 
-    python3 "$test" </dev/null >"$TMPDIR/out" 2>/dev/null
+    python3 "$test" </dev/null >"$TMPDIR/out" 2>"$TMPDIR/dbg"
     RESULT=$?
 
     if ! [ "x$RESULT" = x0 ]; then
         echo FAIL
+        cat "$TMPDIR/dbg"
         echo
         echo "EXIT CODE $RESULT: $test"
         echo
     elif ! diff -b -q "$TMPDIR/ans" "$TMPDIR/out" >/dev/null; then
         echo FAIL
+        cat "$TMPDIR/dbg"
         echo
         echo "INCORRECT OUTPUT: $test"
         echo

@@ -1,13 +1,13 @@
-#!/usr/bin/env python3
 
+import timer
+import sys
+import mandalka
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-import sys
-import mandalka
-
 from worlds import Mnist, Accuracy, Distribution, Batch, PolicyNet
 from agents import Agent, RandomChoice
+assert timer.t() < 0.1
 
 def norm(v):
     return np.sqrt(np.sum(np.square(v)))
@@ -48,3 +48,4 @@ def test():
     print("Neural net sanity check:", acc > 0.9, acc < 1.0)
 
 test()
+assert timer.t() < 6.0

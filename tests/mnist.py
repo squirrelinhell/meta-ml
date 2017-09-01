@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 
+import timer
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
@@ -19,3 +19,4 @@ def test():
         print_exp(exp)
 
 test()
+assert timer.t() < 0.2
