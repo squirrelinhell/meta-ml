@@ -5,7 +5,7 @@ import mandalka
 from . import World
 
 @mandalka.node
-class WholeTrajectories(World):
+class Policy(World):
     def __init__(self, world):
         import numpy as np
 

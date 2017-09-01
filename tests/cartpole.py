@@ -28,9 +28,9 @@ class LearningRate(Agent):
         self.action = action
 
 def solve(problem):
-    problem = WholeTrajectories(problem)
+    problem = Policy(problem)
     problem = Distribution(Reinforce(problem))
-    problem = PolicyNet(problem, batch_size=16)
+    problem = BasicNet(problem, hidden_layers=[128], batch_size=16)
     problem = GradAscent(problem, n_steps=8)
     return problem.inner_agent(LearningRate(), 0)
 

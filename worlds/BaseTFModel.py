@@ -4,7 +4,7 @@ import mandalka
 from . import World
 from agents import Agent
 
-class BaseTFPolicy(World):
+class BaseTFModel(World):
     def _action_batch(self, obs_batch, act_shape, params, **kwargs):
         raise NotImplementedError("_policy")
 

@@ -25,7 +25,7 @@ class LearningRate(Agent):
 
 def solve(problem):
     problem = Distribution(problem)
-    problem = PolicyNet(problem, batch_size=128)
+    problem = BasicNet(problem, hidden_layers=[128], batch_size=128)
     problem = GradAscent(problem, n_steps=200)
     return problem.inner_agent(LearningRate(), 0)
 

@@ -2,10 +2,10 @@
 from .World import World
 
 from .Accuracy import Accuracy
+from .BasicNet import BasicNet
 from .Distribution import Distribution
 from .GradAscent import GradAscent
 from .Gym import Gym
 from .Mnist import Mnist
-from .PolicyNet import PolicyNet
+from .Policy import Policy
 from .Reinforce import Reinforce
-from .WholeTrajectories import WholeTrajectories

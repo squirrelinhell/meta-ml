@@ -1,13 +1,13 @@
 
 import mandalka
 
-from .BaseTFPolicy import BaseTFPolicy
+from .BaseTFModel import BaseTFModel
 
 @mandalka.node
-class PolicyNet(BaseTFPolicy):
+class BasicNet(BaseTFModel):
     def _action_batch(self,
             obs_batch, act_shape, params,
-            hidden_layers=[128]):
+            hidden_layers):
         import numpy as np
         import tensorflow as tf
 
