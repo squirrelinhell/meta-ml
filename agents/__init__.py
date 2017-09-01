@@ -1,6 +1,7 @@
 
 from .Agent import Agent
+
+from .PolicyChoice import PolicyChoice
 from .RandomChoice import RandomChoice
 from .Repeat import Repeat
-from .SampleFromPolicy import SampleFromPolicy
 from .Softmax import Softmax

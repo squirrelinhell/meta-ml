@@ -1,17 +1,14 @@
 
-import mandalka
-
 from . import Agent
 
-@mandalka.node
-class SampleFromPolicy(Agent):
+class PolicyChoice(Agent):
     def __init__(self, agent):
         import numpy as np
 
         rng = np.random.RandomState()
 
-        def action_batch(o_batch):
-            a_batch = np.asarray(agent.action_batch(o_batch))
+        def action_batch(obs_batch):
+            a_batch = np.asarray(agent.action_batch(obs_batch))
             assert len(a_batch.shape) == 2
 
             ans = np.zeros(a_batch.shape)

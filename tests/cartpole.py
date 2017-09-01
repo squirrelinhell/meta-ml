@@ -1,48 +1,51 @@
 
 import timer
 import sys
-import mandalka
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-from worlds import Gym, Reinforce, Distribution, Batch, PolicyNet
-from agents import Agent, RandomChoice, SampleFromPolicy, Softmax
+from worlds import Gym, Reinforce, Distribution, WholeTrajectories, PolicyNet
+from agents import Agent, RandomChoice, PolicyChoice, Softmax
 
 def norm(v):
     return np.sqrt(np.sum(np.square(v)))
 
-def score(agent, n_episodes=3, batch_size=16):
-    world = Batch(
-        Gym("CartPole-v1", normalize_rewards=False),
-        batch_size
-    )
+def score(agent, n_episodes=128, batch_size=16):
+    world = Gym("CartPole-v1")
     rew_sum = 0.0
-    for i in range(n_episodes):
-        _, exp = world.after_episode(agent, i)
-        for o, a, r in exp:
-            rew_sum += np.mean(r)
-    return rew_sum / (n_episodes * batch_size)
+    done = 0
+    while done < n_episodes:
+        for traj in world.trajectory_batch(agent, range(batch_size)):
+            for o, a, r in traj:
+                rew_sum += np.mean(r)
+        done += batch_size
+    return rew_sum / done
 
-@mandalka.node
 class GradAscend(Agent):
-    lr = 2000.0
+    def __init__(self, world, lr):
+        assert world.rew_shape == world.act_shape
+        values = np.random.randn(*world.act_shape)
 
-    def action_batch(self, o_batch):
-        upd = o_batch * GradAscend.lr
-        sys.stderr.write(
-            "Gradient norm: %.8f, update: %.8f\n"
-                % (norm(o_batch), norm(upd))
-        )
-        return upd
+        def learn(traj):
+            nonlocal values
+            for o, a, r in traj:
+                upd = r * lr
+                sys.stderr.write("Update norm: %.8f\n" % norm(upd))
+                values += upd
 
-def train_policy(problem, seed):
-    policy = PolicyNet(
-        Distribution(Reinforce(Batch(problem, 16))),
-        init_seed=1,
-        ep_len=6
+        self.action = lambda _: values
+        self.learn = learn
+
+def train_policy(problem):
+    policy_world = PolicyNet(
+        Distribution(Reinforce(WholeTrajectories(problem))),
+        batch_size=16
     )
-    policy, _ = policy.after_episode(GradAscend(), seed)
-    return SampleFromPolicy(Softmax(policy))
+    params = GradAscend(policy_world, 2000)
+    for i in range(8):
+        params.learn(policy_world.trajectory(params, i))
+
+    return PolicyChoice(Softmax(policy_world.get_policy(params)))
 
 def test1():
     world = Gym("CartPole-v1")
@@ -56,11 +59,11 @@ def test2():
     world = Gym("CartPole-v1")
     scores = []
 
-    s = score(train_policy(world, 0))
+    s = score(train_policy(world))
     sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
 
     print("Policy network sanity check:", s >= 60.0)
 
 test1()
 test2()
-assert timer.t() < 6.0
+assert timer.t() < 8.0

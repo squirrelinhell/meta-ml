@@ -29,26 +29,19 @@ class BaseTable(World):
         self.get_action_shape = lambda: labels[0].shape
         self.get_reward_shape = lambda: labels[0].shape
 
-        def after_episode(agent, seed, batch_size=1):
-            assert batch_size >= 1
+        def trajectory_batch(agent, seed_batch):
+            # Assume seeds passed from the top are sensible
+            idx = [seed % len(inputs) for seed in seed_batch]
 
-            # Avoid PRNG initialization in case of 1-element batch
-            if batch_size == 1:
-                idx = [seed % len(inputs)]
-            else:
-                rng = np.random.RandomState(seed)
-                idx = rng.randint(len(inputs), size=batch_size)
+            # Request predictions from the outer agent
+            pred_batch = np.asarray(agent.action_batch(inputs[idx]))
+            assert pred_batch.shape == (len(idx),) + labels[0].shape
 
-            # Request predictions from the agent
-            pred = np.asarray(agent.action_batch(inputs[idx]))
-            assert pred.shape == (batch_size,) + labels[0].shape
-
-            # If predictions are from softmax, cross entropy
-            # gradient is equal to (label - prediction)
-            exp = [
-                (inputs[i], p, labels[i] - p)
-                for i, p in zip(idx, pred)
+            # Gradient (label - prediction) is correct for
+            # 1/2 MSE and also for softmax + cross entropy (!)
+            return [
+                [(inputs[i], pred, labels[i] - pred)]
+                for i, pred in zip(idx, pred_batch)
             ]
-            return self, exp
 
-        self.after_episode = after_episode
+        self.trajectory_batch = trajectory_batch

@@ -1,23 +1,16 @@
 
-import mandalka
-
 from . import Agent
 
-@mandalka.node
 class RandomChoice(Agent):
     def __init__(self, world):
         import numpy as np
 
         rng = np.random.RandomState()
-        a_size = np.prod(world.a_shape)
+        act_size = np.prod(world.act_shape)
 
-        def action_batch(o_batch):
-            ans = np.zeros((len(o_batch), a_size))
+        def action(obs):
+            ans = np.zeros(act_size)
+            ans[rng.choice(act_size)] = 1.0
+            return ans.reshape(world.act_shape)
 
-            choices = np.random.choice(a_size, size=len(ans))
-            for i, c in enumerate(choices):
-                ans[i, c] = 1.0
-
-            return ans.reshape((len(ans),) + world.a_shape)
-
-        self.action_batch = action_batch
+        self.action = action

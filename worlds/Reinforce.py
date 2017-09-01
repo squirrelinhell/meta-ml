@@ -2,31 +2,39 @@
 import mandalka
 
 from . import World
-from agents import SampleFromPolicy
+from agents import PolicyChoice
 
 @mandalka.node
 class Reinforce(World):
     def __init__(self, world):
         import numpy as np
 
-        self.get_observation_shape = lambda: world.o_shape
-        self.get_action_shape = lambda: world.a_shape
-        self.get_reward_shape = lambda: world.a_shape
+        self.get_observation_shape = lambda: world.obs_shape
+        self.get_action_shape = lambda: world.act_shape
+        self.get_reward_shape = lambda: world.act_shape
 
-        assert world.r_shape == (1,)
+        assert world.rew_shape == (1,)
 
-        def after_episode(agent, seed):
-            w2, exp = world.after_episode(SampleFromPolicy(agent), seed)
+        def process_traj(agent, traj):
+            # Unpack trajectory to vertical arrays
+            obs, real_action, rew = zip(*traj)
+            real_action = np.asarray(real_action)
+            rew = np.asarray(rew).reshape(-1)
+            assert rew.shape == (len(real_action),)
 
-            o, real_a, r = zip(*exp)
-            real_a = np.asarray(real_a)
-            r = np.asarray(r).reshape(-1)
-            assert r.shape == (len(real_a),)
+            # True off-policy version of REINFORCE (!!!)
+            agent_action = agent.action_batch(obs)
+            return list(zip(
+                obs,
+                agent_action,
+                ((real_action - agent_action).T * rew.T).T
+            ))
 
-            # Off-policy version of REINFORCE (!!!)
-            agent_a = agent.action_batch(o)
-            exp = list(zip(o, agent_a, ((real_a - agent_a).T * r.T).T))
+        def trajectory_batch(agent, seed_batch):
+            trajs = world.trajectory_batch(
+                PolicyChoice(agent),
+                seed_batch
+            )
+            return [process_traj(agent, t) for t in trajs]
 
-            return self if w2 == world else Reinforce(w2), exp
-
-        self.after_episode = after_episode
+        self.trajectory_batch = trajectory_batch

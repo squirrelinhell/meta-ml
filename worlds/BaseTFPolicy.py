@@ -4,148 +4,103 @@ import mandalka
 from . import World
 from agents import Agent
 
-class BaseTFPolicy(World, Agent):
-    def _policy(self, o_batch, a_shape, params, **kwargs): # -> a_batch
+class BaseTFPolicy(World):
+    def _action_batch(self, obs_batch, act_shape, params, **kwargs):
         raise NotImplementedError("_policy")
 
-    def __init__(self, world,
-            init_seed,
-            ep_len=100,
-            **kwargs):
+    def __init__(self, world, batch_size=128, **kwargs):
         import tensorflow as tf
         import numpy as np
 
-        assert world.r_shape == world.a_shape
+        assert world.rew_shape == world.act_shape
 
-        def build_graph():
-            params = Parameters()
+        # Build policy graph
+        params = Parameters()
+        obs_batch = tf.placeholder(
+            tf.float32,
+            (None,) + world.obs_shape
+        )
+        act_batch = tf.reshape(
+            self._action_batch(
+                obs_batch,
+                world.act_shape,
+                params,
+                **kwargs
+            ),
+            (-1,) + world.act_shape
+        )
 
-            # Build policy graph
-            o_batch = tf.placeholder(
-                tf.float32,
-                (None,) + world.o_shape,
-                name="o_batch"
-            )
-            a_batch = tf.reshape(
-                self._policy(o_batch, world.a_shape, params, **kwargs),
-                (-1,) + world.a_shape,
-                name="a_batch"
-            )
+        # Backpropagation
+        act_grad = tf.placeholder(
+            tf.float32,
+            act_batch.shape
+        )
+        intermediate_reward = tf.reduce_sum(tf.reduce_mean(
+            tf.multiply(act_grad, act_batch),
+            axis=0
+        ))
+        params_grad = tf.gradients(
+            intermediate_reward,
+            params.get_tensor()
+        )[0]
 
-            # Backpropagation
-            a_grad = tf.placeholder(
-                tf.float32,
-                a_batch.shape,
-                name="a_grad"
-            )
-            intermediate_reward = tf.reduce_sum(tf.reduce_mean(
-                tf.multiply(a_grad, a_batch),
-                axis=0
-            ))
-            grad = tf.gradients(
-                intermediate_reward,
-                params.get_tensor()
-            )[0]
-            tf.identity(grad, name="params_grad")
+        # Use one TF session for everything
+        sess = tf.Session()
 
-        def build_session():
-            graph = tf.Graph()
-            with graph.as_default():
-                build_graph()
-
-            sess = tf.Session(graph=graph)
-            tf.reset_default_graph()
-
-            # Add easy access to variables by name
-            sess.names = dict()
-            for op in graph.get_operations():
-                sess.names[op.name] = op
-                for t in op.outputs:
-                    sess.names[t.name.split(":")[0]] = t
-
-            tf.Session.__getattr__ = (
-                lambda self, name: self.names.get(name)
-            )
-
-            return sess
-
-        if not isinstance(init_seed, dict):
-            sess = build_session()
-        else:
-            # For continued learning, reuse the session object
-            # (the only difference is the values of parameters,
-            # which are in a placeholder anyway)
-            sess = init_seed["prev"]._get_session()
-
-        params_value = None
-        n_params = sess.params.shape[0].value
+        # Verify parameter count
+        n_params = params.get_size()
         self.get_action_shape = lambda: (n_params,)
         self.get_reward_shape = lambda: (n_params,)
 
-        def step(meta_agent, seed):
-            nonlocal params_value
+        class InnerAgent(Agent):
+            def __init__(self, params_value):
+                def action_batch(feed_obs_batch):
+                    return sess.run(
+                        act_batch,
+                        feed_dict={
+                            params.get_tensor(): params_value,
+                            obs_batch: feed_obs_batch
+                        }
+                    )
+                self.action_batch = action_batch
+
+        def trajectory(outer_agent, seed):
+            # Generate seeds for the whole batch
+            rng = np.random.RandomState(seed)
+            seed_batch = rng.randint(2**32, size=batch_size)
+
+            # Get parameters from the outer agent
+            params_value = outer_agent.action(None)
 
             # Gather experience by running policy with current
             # parameters as an agent in the underlying world
-            w2, exp = world.after_episode(self, seed)
+            inner_agent = InnerAgent(params_value)
+            trajs = world.trajectory_batch(inner_agent, seed_batch)
 
-            # Get average parameter gradient of this experience batch
-            # (it's OK to ignore actions, because they are exactly
-            # the same as generated from current parameters)
-            assert len(exp) >= 1
-            o, a, r = zip(*exp)
-            params_grad = sess.run(
-                sess.params_grad,
+            # Concatenate experience lists
+            # IMPORTANT: We ignore actions, so this only works
+            # if the underlying world is strictly on-policy
+            all_obs = []
+            all_rew = []
+            for traj in trajs:
+                for o, a, r in traj:
+                    all_obs.append(o)
+                    all_rew.append(r)
+
+            # Backpropagate gradient to parameters
+            grad = sess.run(
+                params_grad,
                 feed_dict={
-                    sess.params: params_value,
-                    sess.o_batch: o,
-                    sess.a_grad: r
+                    params.get_tensor(): params_value,
+                    obs_batch: all_obs,
+                    act_grad: all_rew
                 }
             )
 
-            # Compute new policy parameters
-            params_grad = params_grad.reshape((1, n_params))
-            params_update = meta_agent.action_batch(params_grad)[0]
-            params_value += params_update
+            return [(None, params_value, grad)]
 
-        def action_batch(o):
-            return sess.run(
-                sess.a_batch,
-                feed_dict={
-                    sess.params: params_value,
-                    sess.o_batch: o
-                }
-            )
-
-        self.action_batch = action_batch
-
-        def init_params():
-            nonlocal params_value
-
-            if not isinstance(init_seed, dict):
-                rng = np.random.RandomState(init_seed)
-                params_value = rng.randn(n_params)
-            else:
-                # Continue learning from a previous state
-                assert ep_len >= 1
-                rng = np.random.RandomState(init_seed["seed"])
-                params_value = init_seed["prev"]._get_params_value()
-                for _ in range(ep_len):
-                    step(init_seed["agent"], rng.randint(2**32))
-
-        init_params()
-
-        def after_episode(agent, seed):
-            return self.__class__(
-                world=world,
-                init_seed={"prev": self, "agent": agent, "seed": seed},
-                ep_len=ep_len,
-                **kwargs
-            ), []
-
-        self.after_episode = after_episode
-        self._get_params_value = lambda: params_value.copy()
-        self._get_session = lambda: sess
+        self.trajectory = trajectory
+        self.get_policy = lambda a: InnerAgent(a.action(None))
 
 class Parameters:
     def __init__(self):

@@ -8,10 +8,11 @@ export PYTHONPATH="$(pwd):$PYTHONPATH"
 if [ "x$1" != x ]; then
     TEST_FILE="tests/$1"
     [ -f "$TEST_FILE" ] || TEST_FILE="$TEST_FILE.py"
+    TGT_FILE="$TMPDIR/$(basename $TEST_FILE)"
     export DEBUG=1
-    echo "import debug" > "$TMPDIR/run.py"
-    cat "$TEST_FILE" >> "$TMPDIR/run.py"
-    exec python3 "$TMPDIR/run.py"
+    echo "import debug" > "$TGT_FILE"
+    cat "$TEST_FILE" >> "$TGT_FILE"
+    exec python3 "$TGT_FILE"
 fi
 
 for test in $(find tests -name '*.py' | sort); do
