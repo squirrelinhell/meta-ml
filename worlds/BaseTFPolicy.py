@@ -100,7 +100,9 @@ class BaseTFPolicy(World):
             return [(None, params_value, grad)]
 
         self.trajectory = trajectory
-        self.get_policy = lambda a: InnerAgent(a.action(None))
+        self.build_agent = lambda a: world.build_agent(
+            InnerAgent(a.action(None))
+        )
 
 class Parameters:
     def __init__(self):

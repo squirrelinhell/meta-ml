@@ -35,6 +35,9 @@ class World:
 
         return [self.trajectory(agent, s) for s in seed_batch]
 
+    def build_agent(outer_agent): # -> {Agent}
+        raise NotImplementedError("inner_agent")
+
     # For convenience only
     def __getattr__(self, name):
         if name in ("obs_shape", "observation_shape"):

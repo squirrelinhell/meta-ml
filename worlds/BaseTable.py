@@ -45,3 +45,4 @@ class BaseTable(World):
             ]
 
         self.trajectory_batch = trajectory_batch
+        self.build_agent = lambda a: a

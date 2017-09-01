@@ -46,7 +46,8 @@ def test():
     for i in range(200):
         params.learn(policy_world.trajectory(params, i))
 
-    acc = score(policy_world.get_policy(params))
+    policy = policy_world.build_agent(params)
+    acc = score(policy)
 
     sys.stderr.write("Neural net accuracy: %.1f%%\n" % (acc * 100.0))
     print("Neural net sanity check:", acc > 0.9, acc < 1.0)

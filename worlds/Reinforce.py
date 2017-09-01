@@ -38,3 +38,4 @@ class Reinforce(World):
             return [process_traj(agent, t) for t in trajs]
 
         self.trajectory_batch = trajectory_batch
+        self.build_agent = lambda a: world.build_agent(PolicyChoice(a))

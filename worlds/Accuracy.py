@@ -29,3 +29,4 @@ class Accuracy(World):
             ]
 
         self.trajectory_batch = trajectory_batch
+        self.build_agent = lambda a: world.build_agent(a)
