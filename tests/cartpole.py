@@ -35,8 +35,9 @@ def test2():
     print("Policy network sanity check:", s >= 50.0)
 
     if "DEBUG" in os.environ:
+        timer.t()
         for _ in range(5):
-            world.render(policy)
+            Gym("CartPole-v1").render(agent)
     else:
         assert timer.t() < 9.0
 

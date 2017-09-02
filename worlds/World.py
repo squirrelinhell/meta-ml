@@ -1,12 +1,4 @@
 
-def default(f):
-    def error():
-        raise NotImplementedError(
-            "World should implement trajectory() or trajectory_batch()"
-        )
-    f.assert_not_default = error
-    return f
-
 class World:
     def get_observation_shape(self): # -> {tuple of int} or None
         return None
@@ -17,26 +9,25 @@ class World:
     def get_reward_shape(self): # -> {tuple of int}
         raise NotImplementedError("get_reward_shape")
 
-    @default
     def trajectory(self, agent, seed): # -> list of (obs, act, reward)
-        try:
-            self.trajectory_batch.assert_not_default()
-        except AttributeError:
-            pass
-
+        assert not World.is_default(self.trajectory_batch)
         return self.trajectory_batch(agent, [seed])[0]
 
-    @default
     def trajectory_batch(self, agent, seed_batch): # -> list of traj.
-        try:
-            self.trajectory.assert_not_default()
-        except AttributeError:
-            pass
-
+        assert not World.is_default(self.trajectory)
         return [self.trajectory(agent, s) for s in seed_batch]
 
     def inner_agent(self, agent, seed): # -> {Agent}
         raise NotImplementedError("inner_agent")
+
+    # Check if at least one of these is really implemented
+    trajectory.is_default = True
+    trajectory_batch.is_default = True
+    def is_default(f):
+        try:
+            return f.is_default
+        except AttributeError:
+            return False
 
     # For convenience only
     def __getattr__(self, name):
