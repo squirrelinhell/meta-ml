@@ -5,7 +5,7 @@ from .BaseTable import BaseTable
 
 @mandalka.node
 class Mnist(BaseTable):
-    def _build(self, test=False):
+    def _build_table(self, test=False):
         import tensorflow.examples.tutorials.mnist as tf_mnist
         data = tf_mnist.input_data.read_data_sets(
             "/tmp/mnist-download",

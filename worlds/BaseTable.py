@@ -4,7 +4,7 @@ import mandalka
 from . import World
 
 class BaseTable(World):
-    def _build(self, **kwargs): # -> (inputs, labels)
+    def _build_table(self, **kwargs): # -> (inputs, labels)
         raise NotImplementedError("_build")
 
     def __init__(self, **kwargs):
@@ -34,7 +34,8 @@ class BaseTable(World):
             idx = [seed % len(inputs) for seed in seed_batch]
 
             # Request predictions from the outer agent
-            pred_batch = np.asarray(agent.action_batch(inputs[idx]))
+            _, pred_batch = agent.step([None] * len(idx), inputs[idx])
+            pred_batch = np.asarray(pred_batch)
             assert pred_batch.shape == (len(idx),) + labels[0].shape
 
             # Gradient (label - prediction) is correct for
@@ -45,4 +46,3 @@ class BaseTable(World):
             ]
 
         self.trajectory_batch = trajectory_batch
-        self.inner_agent = lambda a, s: a

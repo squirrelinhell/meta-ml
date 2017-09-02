@@ -66,28 +66,32 @@ class Gym(World):
             envs = [get_env() for _ in seed_batch]
             trajs = [[] for _ in envs]
 
+            sta = [None for _ in envs]
             obs = [process_obs(e.reset()) for e in envs]
             obs_idx = range(len(envs))
 
             while len(obs) >= 1:
+                n_active = len(obs)
+
                 # Ask the outer agent to process observations
-                actions = agent.action_batch(np.array(obs))
-                actions = np.asarray(actions)
-                assert len(actions) == len(obs)
+                sta, act = agent.step(sta, obs)
+                assert len(sta) == n_active
+                assert len(act) == n_active
 
                 # Do a step in each environment and gather observations
-                next_obs, next_obs_idx = [], []
-                for o, a, i in zip(obs, actions, obs_idx):
+                next_sta, next_obs, next_obs_idx = [], [], []
+                for s, o, a, i in zip(sta, obs, act, obs_idx):
                     next_o, r, done, _ = envs[i].step(process_action(a))
                     trajs[i].append((o, a, r))
                     if done:
                         return_env(envs[i])
                         envs[i] = None
                     else:
+                        next_sta.append(s)
                         next_obs.append(process_obs(next_o))
                         next_obs_idx.append(i)
 
-                obs, obs_idx = next_obs, next_obs_idx
+                sta, obs, obs_idx = next_sta, next_obs, next_obs_idx
 
             return trajs
 
@@ -95,16 +99,15 @@ class Gym(World):
             env = get_env()
             env.render()
 
+            sta = [None]
             obs = process_obs(env.reset())
             done = False
             while not done:
-                obs, rew, done, _ = env.step(
-                    process_action(agent.action(obs))
-                )
+                sta, act = agent.step(sta, [obs])
+                obs, rew, done, _ = env.step(process_action(act[0]))
                 env.render()
 
             return_env(env)
 
         self.trajectory_batch = trajectory_batch
-        self.inner_agent = lambda a, s: a
         self.render = render

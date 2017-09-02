@@ -1,10 +1,11 @@
 
 import timer
+
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-from worlds import Mnist, Distribution
-from agents import Repeat
+from worlds import Mnist
+from agents import Zero, Softmax
 
 def print_traj(t):
     for o, a, r in t:
@@ -13,9 +14,10 @@ def print_traj(t):
         print(r)
 
 def test():
-    world = Distribution(Mnist())
+    world = Mnist()
+    agent = Softmax(world, 123, logits=Zero)
     for i in range(10):
-        print_traj(world.trajectory(Repeat([0] * 10), i))
+        print_traj(world.trajectory(agent, i))
 
 test()
 assert timer.t() < 0.2
