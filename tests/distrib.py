@@ -5,7 +5,8 @@ import mandalka
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-from agents import Configure, Cycle, Gauss, Softmax
+from agents import configure
+from agents import Cycle, Gauss, Softmax
 from worlds import World
 
 @mandalka.node
@@ -28,8 +29,8 @@ def test1():
     world = TestWorld()
     agent = Softmax(
         world,
-        123,
-        logits=Configure(
+        0,
+        logits=configure(
             Cycle,
             sequence=[
                 [1.0, 2.0],

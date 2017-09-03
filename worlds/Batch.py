@@ -1,5 +1,4 @@
 
-import sys
 import mandalka
 
 from . import World
@@ -31,5 +30,7 @@ class Batch(World):
 
             return output_traj
 
-        self.trajectory = trajectory
-        self.inner_agent = lambda a, s: world.inner_agent(a, s)
+        self.trajectory_batch = (
+            lambda agent, seed_batch:
+                [trajectory(agent, seed) for seed in seed_batch]
+        )

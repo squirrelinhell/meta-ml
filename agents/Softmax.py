@@ -9,8 +9,10 @@ class Softmax(Agent):
     def __init__(self, world, seed, logits):
         import numpy as np
 
-        if callable(logits):
+        # Create agent object (if needed)
+        if not isinstance(logits, Agent):
             logits = logits(SoftmaxWorld(world), seed)
+            assert isinstance(logits, Agent)
 
         def step(sta_batch, obs_batch):
             sta_batch, act_batch = logits.step(sta_batch, obs_batch)
@@ -33,6 +35,11 @@ class SoftmaxWorld(World):
         self.get_reward_shape = lambda: world.rew_shape
 
         def trajectory_batch(agent, seed_batch):
-            return world.trajectory_batch(Softmax(agent), seed_batch)
+            assert isinstance(agent, Agent)
+
+            return world.trajectory_batch(
+                Softmax(world, None, agent),
+                seed_batch
+            )
 
         self.trajectory_batch = trajectory_batch

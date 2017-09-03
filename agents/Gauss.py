@@ -4,7 +4,7 @@ import mandalka
 from . import Agent
 
 @mandalka.node
-class Gauss:
+class Gauss(Agent):
     def __init__(self, world, seed):
         import numpy as np
 

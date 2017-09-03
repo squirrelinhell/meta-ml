@@ -2,6 +2,9 @@
 import os
 import sys
 
+import mandalka
+mandalka.config(debug=True)
+
 def print_err(_1, err, _2):
     info = "[Note: set the environment variable DEBUG to see details]"
     sys.stderr.write("Error: " + str(err) + "\n" + info + "\n")
