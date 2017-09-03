@@ -1,11 +1,10 @@
 
-import timer
+from tests._ import timer
 
 import mandalka
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 
-from agents import configure
 from agents import Cycle, Gauss, Softmax
 from worlds import World
 
@@ -30,8 +29,7 @@ def test1():
     agent = Softmax(
         world,
         0,
-        logits=configure(
-            Cycle,
+        logits=Cycle(
             sequence=[
                 [1.0, 2.0],
                 [5.0, 4.0],

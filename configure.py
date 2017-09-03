@@ -21,4 +21,4 @@ class configure:
 
     def __getattr__(self, name):
         raise ValueError("Object " + str(self.cls)
-            + " is not yet constructed")
+            + " has not yet been constructed")

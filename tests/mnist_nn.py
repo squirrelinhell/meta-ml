@@ -1,5 +1,5 @@
 
-import timer
+from tests._ import timer
 
 import sys
 import numpy as np

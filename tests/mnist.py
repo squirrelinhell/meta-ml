@@ -1,5 +1,5 @@
 
-import timer
+from tests._ import timer
 
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
@@ -15,7 +15,7 @@ def print_traj(t):
 
 def test():
     world = Mnist()
-    agent = Softmax(world, 123, logits=Zero)
+    agent = Softmax(world, 0, logits=Zero)
     for i in range(10):
         print_traj(world.trajectory(agent, i))
 

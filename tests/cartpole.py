@@ -1,5 +1,5 @@
 
-import timer
+from tests._ import timer
 
 import os
 import sys

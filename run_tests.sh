@@ -11,13 +11,15 @@ if [ "x$1" != x -a "x$2" = x ]; then
     [ -f "$TEST_FILE" ] || TEST_FILE="$TEST_FILE.py"
     TGT_FILE="$TMPDIR/$(basename $TEST_FILE)"
     export DEBUG=1
-    echo "import debug" > "$TGT_FILE"
+    echo "from tests._ import debug" > "$TGT_FILE"
     cat "$TEST_FILE" >> "$TGT_FILE"
     exec python3 "$TGT_FILE"
 fi
 
 TESTS="$@"
-[ "x$TESTS" != x ] || TESTS=$(find tests -name '*.py' | sort)
+if [ "x$TESTS" = x ]; then
+    TESTS=$(find tests -maxdepth 1 -name '*.py' | sort)
+fi
 
 for test in $TESTS; do
     [ -f "$test" ] || test="tests/$test"
