@@ -11,11 +11,12 @@ from agents import *
 assert timer.t() < 0.15
 
 def score(agent):
-    world = Batch(Batch(Gym("CartPole-v1"), 16), 8) # 128 episodes
+    world = Gym("CartPole-v1")
     rew_sum = 0.0
-    for o, a, r in world.trajectory(agent, 0):
-        rew_sum += np.mean(r)
-    return rew_sum / 128.0
+    for t in world.trajectory_batch(agent, range(100)):
+        for o, a, r in t:
+            rew_sum += np.mean(r)
+    return rew_sum / 100.0
 
 def test1():
     agent = RandomChoice(Gym("CartPole-v1"), 123, p=0.5)
@@ -25,12 +26,10 @@ def test1():
 
 def test2():
     SupervisedAgent = Softmax(
-        logits=LearnOn(
-            agent=BasicNet(
-                hidden_layers=[128],
-                params=GradAscent(n_steps=8, log_lr=0.8)
-            ),
-            learn_world=Batch(batch_size=16)
+        logits=BasicNet(
+            hidden_layers=[128],
+            batch_size=16,
+            params=GradAscent(n_steps=8, log_lr=0.8)
         )
     )
     RLAgent = LearnOn(

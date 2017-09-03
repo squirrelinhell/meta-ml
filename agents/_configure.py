@@ -1,6 +1,8 @@
 
 import mandalka
 
+from worlds import World
+
 @mandalka.node
 class configure:
     def __init__(self, cls, **params):
@@ -15,6 +17,9 @@ class configure:
         if len(args) == 0 and len(more_params) >= 1:
             return configure(self.cls, **all_params)
         else:
+            assert len(args) == 2
+            assert isinstance(args[0], World)
+            assert isinstance(args[1], int)
             ret = self.cls(*args, **all_params)
             self.results.add(ret)
             return ret

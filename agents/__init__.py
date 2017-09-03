@@ -11,7 +11,7 @@ from .RandomChoice import RandomChoice
 from .Reinforce import Reinforce
 from .Softmax import Softmax
 
-from configure import configure
+from ._configure import configure
 
 BasicNet = configure(BasicNet)
 Constant = configure(Constant)

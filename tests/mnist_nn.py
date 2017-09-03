@@ -10,10 +10,11 @@ from agents import *
 assert timer.t() < 0.15
 
 def score(agent, n_episodes=1000):
-    world = Accuracy(Batch(Mnist(test=True), n_episodes))
+    world = Accuracy(Mnist(test=True))
     rew_sum = 0.0
-    for o, a, r in world.trajectory(agent, 0):
-        rew_sum += np.mean(r)
+    for t in world.trajectory_batch(agent, range(n_episodes)):
+        for o, a, r in t:
+            rew_sum += np.mean(r)
     return rew_sum / n_episodes
 
 def test1():
@@ -24,12 +25,10 @@ def test1():
 
 def test2():
     SupervisedAgent = Softmax(
-        logits=LearnOn(
-            agent=BasicNet(
-                hidden_layers=[128],
-                params=GradAscent(n_steps=200, log_lr=1.1)
-            ),
-            learn_world=Batch(batch_size=128)
+        logits=BasicNet(
+            hidden_layers=[128],
+            batch_size=128,
+            params=GradAscent(n_steps=200, log_lr=1.1)
         )
     )
     agent = SupervisedAgent(Mnist(), 0)

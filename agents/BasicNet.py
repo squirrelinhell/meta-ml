@@ -6,11 +6,11 @@ from worlds import World
 
 @mandalka.node
 class BasicNet(Agent):
-    def __init__(self, world, seed, hidden_layers, params):
+    def __init__(self, world, seed, hidden_layers, batch_size, params):
         import numpy as np
 
         # Wrap the original world with a meta world of parameters
-        world = BasicNetParamsWorld(world, hidden_layers)
+        world = BasicNetParamsWorld(world, hidden_layers, batch_size)
 
         params = Agent.build(params, world, seed)
 
@@ -29,7 +29,7 @@ class BasicNet(Agent):
 
 @mandalka.node
 class BasicNetParamsWorld(World):
-    def __init__(self, world, hidden_layers):
+    def __init__(self, world, hidden_layers, batch_size):
         import tensorflow as tf
         import numpy as np
 
@@ -104,6 +104,11 @@ class BasicNetParamsWorld(World):
 
         def trajectory(outer_agent, seed):
             assert isinstance(outer_agent, Agent)
+            rng = np.random.RandomState(seed)
+            del seed
+
+            # Generate seeds for the whole batch
+            seed_batch = rng.randint(2**32, size=batch_size)
 
             # Get parameters from the outer agent, and build
             # an agent to hold them
@@ -111,16 +116,22 @@ class BasicNetParamsWorld(World):
                 world,
                 None,
                 hidden_layers=hidden_layers,
+                batch_size=batch_size,
                 params=outer_agent,
             )
             params_value = inner_agent.get_parameters()
 
-            # IMPORTANT: Actions in experience list are assumed
-            # to be generated from the inner agent.
+            # IMPORTANT: Actions in experience list are ignored
+            # (assumed to be generated from the inner agent).
             # So learning only works if the underlying world
             # is strictly on-policy.
-            traj = world.trajectory(inner_agent, seed)
-            all_obs, _, all_rew = zip(*traj)
+            trajs = world.trajectory_batch(inner_agent, seed_batch)
+            all_obs = []
+            all_rew = []
+            for t in trajs:
+                for o, _, r in t:
+                    all_obs.append(o)
+                    all_rew.append(r)
 
             # Backpropagate gradient to parameters
             grad = sess.run(
