@@ -6,6 +6,9 @@ from . import Agent
 @mandalka.node
 class Constant(Agent):
     def __init__(self, world, seed, value):
+        assert seed == 0
+        del seed
+
         import numpy as np
 
         value = np.zeros(world.act_shape) + value

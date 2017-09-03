@@ -9,10 +9,7 @@ class Softmax(Agent):
     def __init__(self, world, seed, logits):
         import numpy as np
 
-        # Create agent object (if needed)
-        if not isinstance(logits, Agent):
-            logits = logits(SoftmaxWorld(world), seed)
-            assert isinstance(logits, Agent)
+        logits = Agent.build(logits, SoftmaxWorld(world), seed)
 
         def step(sta_batch, obs_batch):
             sta_batch, act_batch = logits.step(sta_batch, obs_batch)

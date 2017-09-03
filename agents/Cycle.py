@@ -6,6 +6,9 @@ from . import Agent
 @mandalka.node
 class Cycle(Agent):
     def __init__(self, world, seed, sequence):
+        assert seed == 0
+        del seed
+
         import numpy as np
 
         sequence = np.array(sequence, dtype=np.float32)

@@ -15,8 +15,10 @@ class Batch(World):
         assert batch_size >= 2
 
         def trajectory(agent, seed):
-            # Generate seeds for the whole batch
             rng = np.random.RandomState(seed)
+            del seed
+
+            # Generate seeds for the whole batch
             seed_batch = rng.randint(2**32, size=batch_size)
 
             # Get trajectories from the underlying world

@@ -9,16 +9,11 @@ class GradAscent(Agent):
     def __init__(self, world, seed, log_lr, n_steps, init=Gauss):
         import numpy as np
         rng = np.random.RandomState(seed)
+        del seed
 
         # Wrap the original world with a meta world of learning rates
         world = GradAscentLRWorld(world, n_steps, init)
-
-        # Create learning rate agent (if needed)
-        if isinstance(log_lr, (int, float)):
-            log_lr = Constant(world, 0, value=log_lr)
-        elif not isinstance(lr, Agent):
-            log_lr = log_lr(world, rng.randint(2**32))
-            assert isinstance(lr, Agent)
+        log_lr = Agent.build(log_lr, world, rng.randint(2**32))
 
         # Run a single trajectory on GradAscentLRWorld
         value_agent = world.value_agent(log_lr, rng.randint(2**32))
@@ -71,20 +66,17 @@ class GradAscentLRWorld(World):
             rng = np.random.RandomState(seed)
             del seed
 
-            # Create an agent to hold initial value (if needed)
-            value_agent = init
-            if not isinstance(value_agent, Agent):
-                value_agent = value_agent(world, rng.randint(2**32))
-                assert isinstance(value_agent, Agent)
+            value_agent = Agent.build(init, world, rng.randint(2**32))
 
             prev_reward = agent_reward(value_agent, rng.randint(2**32))
             baseline = prev_reward
             traj = []
+            state = [None]
 
             for _ in range(n_steps):
                 # Get learning rate from the outer agent
-                _, (log_lr,) = lr_agent.step(
-                    [None],
+                state, (log_lr,) = lr_agent.step(
+                    state,
                     [prev_reward - baseline]
                 )
                 log_lr = np.asarray(log_lr)

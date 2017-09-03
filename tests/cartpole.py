@@ -10,12 +10,6 @@ from worlds import *
 from agents import *
 assert timer.t() < 0.15
 
-def solve(problem):
-    problem = Reinforce(Policy(problem, batch_size=16))
-    problem = BasicNet(Distribution(problem), hidden_layers=[128])
-    problem = GradAscent(problem, n_steps=8)
-    return problem.inner_agent(Repeat([0.8]), 0)
-
 def score(agent):
     world = Batch(Batch(Gym("CartPole-v1"), 16), 8) # 128 episodes
     rew_sum = 0.0
@@ -24,13 +18,26 @@ def score(agent):
     return rew_sum / 128.0
 
 def test1():
-    agent = RandomChoice(Gym("CartPole-v1"))
+    agent = RandomChoice(Gym("CartPole-v1"), 123, p=0.5)
     s = score(agent)
     sys.stderr.write("Reward/episode (random agent): %.5f\n" % s)
     print("Random agent sanity check:", s >= 15.0, s <= 30.0)
 
 def test2():
-    agent = solve(Gym("CartPole-v1"))
+    SupervisedAgent = Softmax(
+        logits=LearnOn(
+            agent=BasicNet(
+                hidden_layers=[128],
+                params=GradAscent(n_steps=8, log_lr=0.8)
+            ),
+            learn_world=Batch(batch_size=16)
+        )
+    )
+    RLAgent = LearnOn(
+        agent=Reinforce(policy=SupervisedAgent),
+        learn_world=WholeTrajectories
+    )
+    agent = RLAgent(Gym("CartPole-v1"), 123)
     s = score(agent)
     sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
     print("Policy network sanity check:", s >= 50.0)

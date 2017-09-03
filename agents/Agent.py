@@ -9,7 +9,9 @@ class Agent:
         if isinstance(agent, Agent):
             return agent
         elif callable(agent):
-            return agent(world, seed)
+            agent = agent(world, seed)
+            assert isinstance(agent, Agent)
+            return agent
         else:
             from . import Constant
-            return Constant(world, seed, value=agent)
+            return Constant(world, 0, value=agent)

@@ -12,10 +12,7 @@ class BasicNet(Agent):
         # Wrap the original world with a meta world of parameters
         world = BasicNetParamsWorld(world, hidden_layers)
 
-        # Create agent object (if needed)
-        if not isinstance(params, Agent):
-            params = params(world, seed)
-            assert isinstance(params, Agent)
+        params = Agent.build(params, world, seed)
 
         # Get a single parameter vector for this instance
         _, (params,) = params.step([None], [None])

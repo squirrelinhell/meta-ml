@@ -23,20 +23,16 @@ def test1():
     print("Random choice sanity check:", acc > 0.05, acc < 0.15)
 
 def test2():
-    PredictionAgent = configure(
-        Softmax,
-        logits=configure(
-            BasicNet,
-            hidden_layers=[128],
-            params=configure(
-                GradAscent,
-                n_steps=200,
-                log_lr=1.1
-            )
+    SupervisedAgent = Softmax(
+        logits=LearnOn(
+            agent=BasicNet(
+                hidden_layers=[128],
+                params=GradAscent(n_steps=200, log_lr=1.1)
+            ),
+            learn_world=Batch(batch_size=128)
         )
     )
-    world = Batch(Mnist(), batch_size=128)
-    agent = PredictionAgent(world, 0)
+    agent = SupervisedAgent(Mnist(), 0)
     acc = score(agent)
     sys.stderr.write("Neural net accuracy: %.1f%%\n" % (acc * 100.0))
     print("Neural net sanity check:", acc > 0.9, acc < 1.0)
