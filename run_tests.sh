@@ -5,8 +5,9 @@ trap "rm -rf $TMPDIR" EXIT
 
 export PYTHONPATH="$(pwd):$PYTHONPATH"
 
-if [ "x$1" != x ]; then
-    TEST_FILE="tests/$1"
+if [ "x$1" != x -a "x$2" = x ]; then
+    TEST_FILE="$1"
+    [ -f "$TEST_FILE" ] || TEST_FILE="tests/$TEST_FILE"
     [ -f "$TEST_FILE" ] || TEST_FILE="$TEST_FILE.py"
     TGT_FILE="$TMPDIR/$(basename $TEST_FILE)"
     export DEBUG=1
@@ -15,7 +16,12 @@ if [ "x$1" != x ]; then
     exec python3 "$TGT_FILE"
 fi
 
-for test in $(find tests -name '*.py' | sort); do
+TESTS="$@"
+[ "x$TESTS" != x ] || TESTS=$(find tests -name '*.py' | sort)
+
+for test in $TESTS; do
+    [ -f "$test" ] || test="tests/$test"
+    [ -f "$test" ] || test="$test.py"
     echo -n "Test: $test... "
 
     OUT_FILE="${test%.*}.out"

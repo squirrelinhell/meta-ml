@@ -16,7 +16,7 @@ class Configure:
     def __call__(self, *args):
         return self.cls(*args, **self.kwargs)
 
+from .Cycle import Cycle
 from .Gauss import Gauss
-from .Repeat import Repeat
 from .Softmax import Softmax
 from .Zero import Zero
