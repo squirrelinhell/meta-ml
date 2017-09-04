@@ -2,10 +2,10 @@
 import mandalka
 
 from . import World
-from ._base import build_table_world
+from .BaseTable import BaseTable
 
 @mandalka.node
-class Mnist(World):
+class Mnist(BaseTable):
     def __init__(self, test=False):
         def build_table():
             import tensorflow.examples.tutorials.mnist as tf_mnist
@@ -18,4 +18,4 @@ class Mnist(World):
             data = data.test if test else data.train
             return data.images.reshape((-1, 28, 28)), data.labels
 
-        build_table_world(self, build_table)
+        super().__init__(build_table)

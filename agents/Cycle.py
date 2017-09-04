@@ -3,6 +3,7 @@ import mandalka
 
 from . import Agent
 
+@Agent.builder
 @mandalka.node
 class Cycle(Agent):
     def __init__(self, world, seed, sequence):

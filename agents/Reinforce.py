@@ -4,6 +4,7 @@ import mandalka
 from . import Agent, RandomChoice
 from worlds import World
 
+@Agent.builder
 @mandalka.node
 class Reinforce(Agent):
     def __init__(self, world, seed, policy):

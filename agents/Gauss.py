@@ -3,6 +3,7 @@ import mandalka
 
 from . import Agent
 
+@Agent.builder
 @mandalka.node
 class Gauss(Agent):
     def __init__(self, world, seed):

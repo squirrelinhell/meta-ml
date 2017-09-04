@@ -1,10 +1,18 @@
 
 import mandalka
 
-from . import World
+from . import Agent
+from worlds import World
+
+@Agent.builder
+@mandalka.node
+class WholeTrajectories(Agent):
+    def __init__(self, world, seed, agent):
+        agent = Agent.build(agent, WholeTrajectoriesWorld(world), seed)
+        self.step = lambda s, o: agent.step(s, o)
 
 @mandalka.node
-class WholeTrajectories(World):
+class WholeTrajectoriesWorld(World):
     def __init__(self, world):
         import numpy as np
 

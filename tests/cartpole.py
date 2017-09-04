@@ -13,9 +13,10 @@ assert timer.t() < 0.15
 def score(agent):
     world = Gym("CartPole-v1")
     rew_sum = 0.0
-    for t in world.trajectory_batch(agent, range(100)):
-        for o, a, r in t:
-            rew_sum += np.mean(r)
+    for _ in range(10):
+        for t in world.trajectory_batch(agent, range(10)):
+            for o, a, r in t:
+                rew_sum += np.mean(r)
     return rew_sum / 100.0
 
 def test1():
@@ -32,9 +33,8 @@ def test2():
             params=GradAscent(n_steps=8, log_lr=0.8)
         )
     )
-    RLAgent = LearnOn(
-        agent=Reinforce(policy=SupervisedAgent),
-        learn_world=WholeTrajectories
+    RLAgent = WholeTrajectories(
+        agent=Reinforce(policy=SupervisedAgent)
     )
     agent = RLAgent(Gym("CartPole-v1"), 123)
     s = score(agent)

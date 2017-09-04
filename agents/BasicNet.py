@@ -4,6 +4,7 @@ import mandalka
 from . import Agent
 from worlds import World
 
+@Agent.builder
 @mandalka.node
 class BasicNet(Agent):
     def __init__(self, world, seed, hidden_layers, batch_size, params):
@@ -114,7 +115,7 @@ class BasicNetParamsWorld(World):
             # an agent to hold them
             inner_agent = BasicNet(
                 world,
-                None,
+                0,
                 hidden_layers=hidden_layers,
                 batch_size=batch_size,
                 params=outer_agent,

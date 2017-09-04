@@ -3,6 +3,7 @@ import mandalka
 
 from . import Agent
 
+@Agent.builder
 @mandalka.node
 class RandomChoice(Agent):
     def __init__(self, world, seed, p):

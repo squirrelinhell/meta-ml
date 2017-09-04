@@ -4,6 +4,7 @@ import mandalka
 from . import Agent, Constant, Gauss
 from worlds import World
 
+@Agent.builder
 @mandalka.node
 class GradAscent(Agent):
     def __init__(self, world, seed, log_lr, n_steps, init=Gauss):

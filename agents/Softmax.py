@@ -4,6 +4,7 @@ import mandalka
 from . import Agent
 from worlds import World
 
+@Agent.builder
 @mandalka.node
 class Softmax(Agent):
     def __init__(self, world, seed, logits):
@@ -35,7 +36,7 @@ class SoftmaxWorld(World):
             assert isinstance(agent, Agent)
 
             return world.trajectory_batch(
-                Softmax(world, None, agent),
+                Softmax(world, 0, logits=agent),
                 seed_batch
             )
 
