@@ -1,13 +1,9 @@
 
-from tests._ import timer
-
 import sys
 import numpy as np
-np.set_printoptions(precision=3, suppress=True)
-
 from worlds import *
 from agents import *
-assert timer.t() < 0.15
+assert test_timer() < 0.15
 
 def score(agent, n_episodes=1000):
     world = Accuracy(Mnist(test=True))
@@ -38,4 +34,4 @@ def test2():
 
 test1()
 test2()
-assert timer.t() < 6.0
+assert test_timer() < 6.0

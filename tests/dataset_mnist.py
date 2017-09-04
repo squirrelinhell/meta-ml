@@ -1,9 +1,5 @@
 
-from tests._ import timer
-
 import numpy as np
-np.set_printoptions(precision=3, suppress=True)
-
 from worlds import Mnist
 from agents import Zero, Softmax
 
@@ -21,4 +17,4 @@ def test():
         print_traj(Mnist(test=True).trajectory(agent, i))
 
 test()
-assert timer.t() < 0.2
+assert test_timer() < 0.2

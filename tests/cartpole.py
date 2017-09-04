@@ -1,14 +1,10 @@
 
-from tests._ import timer
-
 import os
 import sys
 import numpy as np
-np.set_printoptions(precision=3, suppress=True)
-
 from worlds import *
 from agents import *
-assert timer.t() < 0.15
+assert test_timer() < 0.15
 
 def score(agent):
     world = Gym("CartPole-v1")
@@ -42,11 +38,11 @@ def test2():
     print("Policy network sanity check:", s >= 50.0)
 
     if "DEBUG" in os.environ:
-        timer.t()
+        test_timer()
         for _ in range(5):
             Gym("CartPole-v1").render(agent)
     else:
-        assert timer.t() < 9.0
+        assert test_timer() < 9.0
 
 test1()
 test2()

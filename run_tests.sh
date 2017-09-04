@@ -5,13 +5,40 @@ trap "rm -rf $TMPDIR" EXIT
 
 export PYTHONPATH="$(pwd):$PYTHONPATH"
 
+DEBUG_SETUP='
+import sys
+import IPython.core.ultratb
+sys.excepthook = IPython.core.ultratb.FormattedTB(call_pdb=True)
+'
+
+TEST_SETUP='
+import numpy as np
+np.set_printoptions(precision=3, suppress=True)
+
+def timer():
+    import time
+    start_time = time.time()
+    def get_time(print_info=True):
+        total_time = time.time() - start_time
+        import os
+        import sys
+        sys.stderr.write("Time: %.3fs\n" % total_time)
+        sys.stderr.flush()
+        if "STOPTIME" in os.environ:
+            return 0.0
+        return total_time / 2.0
+    return get_time
+timer = timer()
+'
+
 if [ "x$1" != x -a "x$2" = x ]; then
+    export DEBUG=1
     TEST_FILE="$1"
     [ -f "$TEST_FILE" ] || TEST_FILE="tests/$TEST_FILE"
     [ -f "$TEST_FILE" ] || TEST_FILE="$TEST_FILE.py"
     TGT_FILE="$TMPDIR/$(basename $TEST_FILE)"
-    export DEBUG=1
-    echo "from tests._ import debug" > "$TGT_FILE"
+    echo "$DEBUG_SETUP" "$TEST_SETUP" > "$TMPDIR/setup.py"
+    echo "from setup import timer as test_timer" > "$TGT_FILE"
     cat "$TEST_FILE" >> "$TGT_FILE"
     exec python3 "$TGT_FILE"
 fi
@@ -40,7 +67,10 @@ done
 for test in $TESTS; do
     [ -f "$test" ] || test="tests/$test"
     [ -f "$test" ] || test="$test.py"
-    cat "$test" > "$TMPDIR/run.py"  || exit 1
+
+    echo "$TEST_SETUP" > "$TMPDIR/setup.py"
+    echo "from setup import timer as test_timer" > "$TMPDIR/run.py"
+    cat "$test" >> "$TMPDIR/run.py"  || exit 1
     echo -n "Test: $test... "
 
     OUT_FILE="${test%.*}.out"

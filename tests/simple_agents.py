@@ -1,10 +1,6 @@
 
-from tests._ import timer
-
 import mandalka
 import numpy as np
-np.set_printoptions(precision=3, suppress=True)
-
 from agents import Cycle, Gauss, Softmax
 from worlds import World
 
@@ -47,4 +43,4 @@ def test2():
 
 test1()
 test2()
-assert timer.t() < 0.15
+assert test_timer() < 0.15
