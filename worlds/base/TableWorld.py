@@ -3,7 +3,7 @@ import mandalka
 
 from . import World
 
-class BaseTable(World):
+class TableWorld(World):
     def __init__(self, build_table):
         import os
         import numpy as np

@@ -4,7 +4,7 @@ import mandalka
 class Agent:
     # def __init__(self, world, seed, ...)
 
-    def step(self, sta_batch, obs_batch): # -> (sta_batch, act_batch)
+    def step(self, states, observations): # -> (states, actions)
         raise NotImplementedError
 
     # Static methods
@@ -17,7 +17,7 @@ class Agent:
             assert isinstance(agent, Agent)
             return agent
         else:
-            from . import Constant
+            from .. import Constant
             return Constant(world, 0, value=agent)
 
     def builder(agent_cls):

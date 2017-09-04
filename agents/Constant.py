@@ -1,22 +1,18 @@
 
 import mandalka
 
-from . import Agent
+from .base import Agent, StatelessAgent
 
 @Agent.builder
 @mandalka.node
-class Constant(Agent):
+class Constant(StatelessAgent):
     def __init__(self, world, seed, value):
+        import numpy as np
+
         assert seed == 0
         del seed
 
-        import numpy as np
-
         value = np.zeros(world.act_shape) + value
         assert value.shape == world.act_shape
-
-        def step(sta_batch, obs_batch):
-            tile_dim = [len(obs_batch)] + [1] * len(value.shape)
-            return sta_batch, np.tile(value, tile_dim)
-
-        self.step = step
+        value.setflags(write=False)
+        super().__init__(get_action=lambda _: value)

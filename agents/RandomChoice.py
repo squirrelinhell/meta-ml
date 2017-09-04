@@ -1,27 +1,25 @@
 
 import mandalka
 
-from . import Agent
+from .base import Agent, WrapperAgent
 
 @Agent.builder
 @mandalka.node
-class RandomChoice(Agent):
+class RandomChoice(WrapperAgent):
     def __init__(self, world, seed, p):
         import numpy as np
-        rng = np.random.RandomState(seed)
+
+        p = Agent.build(p, world, seed)
         del seed
 
-        p = Agent.build(p, world, rng.randint(2**32))
+        # Get some really unpredictable choices (ignore seed)
+        rng = np.random.RandomState()
 
-        def step(sta_batch, obs_batch):
-            sta_batch, act_batch = p.step(sta_batch, obs_batch)
-            act_batch = np.asarray(act_batch)
-            assert len(act_batch.shape) == 2
+        def process_action(a):
+            assert len(a.shape) == 1
+            i = rng.choice(len(a), p=a)
+            a[:] = 0.0
+            a[i] = 1.0
+            return a
 
-            ans = np.zeros(act_batch.shape)
-            for i, ps in enumerate(act_batch):
-                ans[i, rng.choice(len(ps), p=ps)] = 1.0
-
-            return sta_batch, ans
-
-        self.step = step
+        super().__init__(p, process_action=process_action)

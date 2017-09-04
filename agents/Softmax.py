@@ -1,29 +1,23 @@
 
 import mandalka
 
-from . import Agent
+from .base import Agent, WrapperAgent
 from worlds import World
 
 @Agent.builder
 @mandalka.node
-class Softmax(Agent):
+class Softmax(WrapperAgent):
     def __init__(self, world, seed, logits):
         import numpy as np
 
         logits = Agent.build(logits, SoftmaxWorld(world), seed)
+        del seed
 
-        def step(sta_batch, obs_batch):
-            sta_batch, act_batch = logits.step(sta_batch, obs_batch)
+        def process_action(a):
+            a = np.exp(a - np.amax(a))
+            return a / a.sum()
 
-            act_batch = np.asarray(act_batch)
-            for i, a in enumerate(act_batch):
-                # Safely calculate softmax
-                a = np.exp(a - np.amax(a))
-                act_batch[i] = a / a.sum()
-
-            return sta_batch, act_batch
-
-        self.step = step
+        super().__init__(logits, process_action=process_action)
 
 @mandalka.node
 class SoftmaxWorld(World):

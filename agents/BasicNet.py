@@ -1,12 +1,12 @@
 
 import mandalka
 
-from . import Agent
+from .base import Agent, StatelessAgent
 from worlds import World
 
 @Agent.builder
 @mandalka.node
-class BasicNet(Agent):
+class BasicNet(StatelessAgent):
     def __init__(self, world, seed, hidden_layers, batch_size, params):
         import numpy as np
 
@@ -14,6 +14,7 @@ class BasicNet(Agent):
         world = BasicNetParamsWorld(world, hidden_layers, batch_size)
 
         params = Agent.build(params, world, seed)
+        del seed
 
         # Get a single parameter vector for this instance
         _, (params,) = params.step([None], [None])
@@ -21,11 +22,9 @@ class BasicNet(Agent):
         params.setflags(write=False)
         assert params.shape == world.act_shape
 
-        def step(sta_batch, obs_batch):
-            # Use the world's TF session to run computations
-            return sta_batch, world.action_batch(params, obs_batch)
+        # Use the world's TF session to run computations
+        super().__init__(get_actions=world.get_actions(params))
 
-        self.step = step
         self.get_parameters = lambda: params
 
 @mandalka.node
@@ -94,12 +93,12 @@ class BasicNetParamsWorld(World):
 
         sess = tf.Session()
 
-        def action_batch(params_value, feed_obs_batch):
-            return sess.run(
+        def get_actions(params_value):
+            return lambda obs: sess.run(
                 act_batch,
                 feed_dict={
                     params.get_tensor(): params_value,
-                    obs_batch: feed_obs_batch
+                    obs_batch: obs
                 }
             )
 
@@ -147,7 +146,7 @@ class BasicNetParamsWorld(World):
             return [(None, params_value, grad)]
 
         self.trajectory = trajectory
-        self.action_batch = action_batch
+        self.get_actions = get_actions
 
 class Parameters:
     def __init__(self):

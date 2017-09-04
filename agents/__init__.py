@@ -1,5 +1,5 @@
 
-from .Agent import Agent
+from .base import Agent
 
 from .BasicNet import BasicNet
 from .Constant import Constant

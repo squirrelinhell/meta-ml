@@ -1,14 +1,16 @@
 
 import mandalka
 
-from . import Agent, Constant, Gauss
+from .base import Agent, StatelessAgent
+from . import Constant, Gauss
 from worlds import World
 
 @Agent.builder
 @mandalka.node
-class GradAscent(Agent):
+class GradAscent(StatelessAgent):
     def __init__(self, world, seed, log_lr, n_steps, init=Gauss):
         import numpy as np
+
         rng = np.random.RandomState(seed)
         del seed
 
@@ -17,11 +19,12 @@ class GradAscent(Agent):
         log_lr = Agent.build(log_lr, world, rng.randint(2**32))
 
         # Run a single trajectory on GradAscentLRWorld
-        value_agent = world.value_agent(log_lr, rng.randint(2**32))
-        self.step = lambda s, o: value_agent.step(s, o)
+        value = world.final_value(log_lr, rng.randint(2**32))
+        value.setflags(write=False)
+        super().__init__(get_action=lambda _: value)
 
 @mandalka.node
-class GradAscentStep(Agent):
+class GradAscentStep(StatelessAgent):
     def __init__(self, world, seed, previous, log_lr):
         import numpy as np
 
@@ -39,11 +42,7 @@ class GradAscentStep(Agent):
         value = value + np.power(10.0, log_lr) * grad
         value.setflags(write=False)
 
-        def step(sta_batch, obs_batch):
-            act_batch = [value] * len(obs_batch)
-            return sta_batch, act_batch
-
-        self.step = step
+        super().__init__(get_action=lambda _: value)
         self.last_gradient = lambda: grad
 
 @mandalka.node
@@ -99,7 +98,8 @@ class GradAscentLRWorld(World):
                 ))
                 prev_reward = new_reward
 
-            return traj, value_agent
+            _, (value,) = value_agent.step([None], [None])
+            return traj, value
 
         self.trajectory = lambda a, s: trajectory(a, s)[0]
-        self.value_agent = lambda a, s: trajectory(a, s)[1]
+        self.final_value = lambda a, s: trajectory(a, s)[1]

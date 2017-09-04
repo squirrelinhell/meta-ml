@@ -1,7 +1,8 @@
 
 import mandalka
 
-from . import Agent, RandomChoice
+from .base import Agent
+from . import RandomChoice
 from worlds import World
 
 @Agent.builder
@@ -9,6 +10,7 @@ from worlds import World
 class Reinforce(Agent):
     def __init__(self, world, seed, policy):
         import numpy as np
+
         rng = np.random.RandomState(seed)
         del seed
 

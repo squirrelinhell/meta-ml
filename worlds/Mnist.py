@@ -1,11 +1,10 @@
 
 import mandalka
 
-from . import World
-from .BaseTable import BaseTable
+from .base import TableWorld
 
 @mandalka.node
-class Mnist(BaseTable):
+class Mnist(TableWorld):
     def __init__(self, test=False):
         def build_table():
             import tensorflow.examples.tutorials.mnist as tf_mnist

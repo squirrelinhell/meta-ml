@@ -1,5 +1,5 @@
 
-from .World import World
+from .base import World
 
 from .Accuracy import Accuracy
 from .Gym import Gym
