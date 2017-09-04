@@ -20,6 +20,7 @@ class TestWorld(World):
             for _ in range(steps):
                 sta, act = agent.step(sta, [0.0])
                 traj.append((0.0, act[0], 0.0))
+                print(act[0])
             return traj
 
         self.trajectory = trajectory
@@ -37,18 +38,12 @@ def test1():
             ]
         )
     )
-
-    for o, a, r in world.trajectory(agent, 0):
-        print(a)
+    world.trajectory(agent, 0)
 
 def test2():
     world = TestWorld(3)
-
-    for o, a, r in world.trajectory(Gauss(world, 0), 0):
-        print(a)
-
-    for o, a, r in world.trajectory(Gauss(world, 1), 0):
-        print(a)
+    world.trajectory(Gauss(world, 0), 0)
+    world.trajectory(Gauss(world, 1), 0)
 
 test1()
 test2()

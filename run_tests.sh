@@ -21,9 +21,26 @@ if [ "x$TESTS" = x ]; then
     TESTS=$(find tests -maxdepth 1 -name '*.py' | sort)
 fi
 
+SYMLINK='
+__cache__/mnist_c1b590f119ddf295
+__cache__/mnist_0d1b375c69275fa7
+'
+
+for f in $SYMLINK; do
+    if [ -e "$f" ]; then
+        DIR=$(dirname "$f") || exit 1
+        mkdir -p "$TMPDIR/$DIR" || exit 1
+        ln -s "$(pwd)/$f" "$TMPDIR/$f" || exit 1
+    else
+        echo "Error: '$f' not found" 2>&1
+        exit 1
+    fi
+done
+
 for test in $TESTS; do
     [ -f "$test" ] || test="tests/$test"
     [ -f "$test" ] || test="$test.py"
+    cat "$test" > "$TMPDIR/run.py"  || exit 1
     echo -n "Test: $test... "
 
     OUT_FILE="${test%.*}.out"
@@ -31,7 +48,10 @@ for test in $TESTS; do
         cat "$OUT_FILE"
     fi > "$TMPDIR/ans"
 
-    python3 "$test" </dev/null >"$TMPDIR/out" 2>"$TMPDIR/dbg"
+    ( \
+        cd "$TMPDIR" \
+        && python3 ./run.py \
+    ) </dev/null >"$TMPDIR/out" 2>"$TMPDIR/dbg"
     RESULT=$?
 
     if ! [ "x$RESULT" = x0 ]; then
