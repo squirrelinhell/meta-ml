@@ -14,11 +14,11 @@ assert timer() < 0.05
 def score(agent):
     world = Gym("CartPole-v1")
     rew_sum = 0.0
-    for _ in range(10):
-        for t in world.trajectory_batch(agent, range(10)):
+    for _ in range(2):
+        for t in world.trajectory_batch(agent, range(16)):
             for o, a, r in t:
                 rew_sum += np.mean(r)
-    return rew_sum / 100.0
+    return rew_sum / 32.0
 
 def test1():
     agent = RandomChoice(Gym("CartPole-v1"), 123, p=0.5)
@@ -47,7 +47,7 @@ def test2():
         for _ in range(5):
             Gym("CartPole-v1").render(agent)
     else:
-        assert timer() < 8.0
+        assert timer() < 5.0
 
 test1()
 test2()

@@ -1,7 +1,7 @@
 
 import mandalka
 
-from . import World
+from .base import World
 
 @mandalka.node
 class Gym(World):
