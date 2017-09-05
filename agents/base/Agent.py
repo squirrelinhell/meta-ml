@@ -9,16 +9,23 @@ class Agent:
 
     # Static methods
 
+    def split_seed(seed):
+        import numpy as np
+        rng = np.random.RandomState(seed)
+        return lambda: rng.randint(2**32)
+
     def build(agent, world, seed):
         if isinstance(agent, Agent):
             return agent
-        elif callable(agent):
+        elif isinstance(agent, AgentBuilder):
             agent = agent(world, seed)
             assert isinstance(agent, Agent)
             return agent
         else:
-            from .. import Constant
-            return Constant(world, 0, value=agent)
+            from values import Value
+            agent = Value.get_float(agent, world.act_shape, seed)
+            assert isinstance(agent, Agent)
+            return agent
 
     def builder(agent_cls):
         name = agent_cls.__name__
@@ -43,7 +50,7 @@ class AgentBuilder:
             # Just adding some parameters, not building yet
             return AgentBuilder(self.cls_name, **all_params)
         else:
-            # Really call agent constructor
+            # Really call object constructor
             assert len(args) == 2
             from worlds import World
             assert isinstance(args[0], World)
@@ -52,5 +59,5 @@ class AgentBuilder:
             return cls(*args, **all_params)
 
     def __getattr__(self, name):
-        raise ValueError("Object " + str(self.cls)
-            + " has not yet been constructed")
+        raise ValueError("Object '" + self.cls_name
+            + "' has not yet been constructed")

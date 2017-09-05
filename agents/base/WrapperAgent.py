@@ -12,7 +12,7 @@ class WrapperAgent(Agent):
         def step(states, observations):
             assert len(states) == len(observations)
             states, actions = agent.step(states, observations)
-            actions = np.asarray(actions)
+            actions = np.array(actions)
 
             if process_action is not None:
                 for i in range(len(actions)):

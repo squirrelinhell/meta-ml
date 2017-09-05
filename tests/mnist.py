@@ -1,4 +1,5 @@
-
+import mandalka
+mandalka.config(lazy=False)
 import sys
 import numpy as np
 import tensorflow as tf
@@ -7,6 +8,7 @@ tf.Session().run(tf.placeholder_with_default(0, shape=None))
 from test_setup import timer
 from worlds import *
 from agents import *
+from values import *
 assert timer() < 0.05
 
 def score(agent, n_episodes=1000):
@@ -28,7 +30,7 @@ def test2():
         logits=BasicNet(
             hidden_layers=[128],
             batch_size=128,
-            params=GradAscent(n_steps=200, log_lr=1.1)
+            params=GradAscent(n_steps=200, log_lr=1.1, init=Gauss)
         )
     )
     agent = SupervisedAgent(Mnist(), 0)

@@ -2,24 +2,24 @@
 import mandalka
 
 from .base import Agent, StatelessAgent
-from . import Constant, Gauss
 from worlds import World
+from values import Value
 
 @Agent.builder
 @mandalka.node
 class GradAscent(StatelessAgent):
-    def __init__(self, world, seed, log_lr, n_steps, init=Gauss):
+    def __init__(self, world, seed, log_lr, n_steps, init):
         import numpy as np
+        seed = Agent.split_seed(seed)
 
-        rng = np.random.RandomState(seed)
-        del seed
+        init = Value.get_float(init, world.act_shape, seed())
 
         # Wrap the original world with a meta world of learning rates
         world = GradAscentLRWorld(world, n_steps, init)
-        log_lr = Agent.build(log_lr, world, rng.randint(2**32))
+        log_lr = Agent.build(log_lr, world, seed())
 
         # Run a single trajectory on GradAscentLRWorld
-        value = world.final_value(log_lr, rng.randint(2**32))
+        value = world.final_value(log_lr, seed())
         value.setflags(write=False)
         super().__init__(get_action=lambda _: value)
 
@@ -66,9 +66,8 @@ class GradAscentLRWorld(World):
             rng = np.random.RandomState(seed)
             del seed
 
-            value_agent = Agent.build(init, world, rng.randint(2**32))
-
-            prev_reward = agent_reward(value_agent, rng.randint(2**32))
+            prev_reward = agent_reward(init, rng.randint(2**32))
+            value_agent = init
             baseline = prev_reward
             traj = []
             state = [None]
@@ -87,7 +86,7 @@ class GradAscentLRWorld(World):
                     world,
                     rng.randint(2**32),
                     previous=value_agent,
-                    log_lr=round(log_lr[0] + baseline, 2),
+                    log_lr=round(float(log_lr[0] + baseline), 2),
                 )
 
                 new_reward = reward(value_agent.last_gradient())

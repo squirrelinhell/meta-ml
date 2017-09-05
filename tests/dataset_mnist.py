@@ -3,7 +3,7 @@ import numpy as np
 
 from test_setup import timer
 from worlds import Mnist
-from agents import Zero, Softmax
+from agents import Softmax
 
 def print_traj(t):
     for o, a, r in t:
@@ -12,7 +12,7 @@ def print_traj(t):
         print(r)
 
 def test():
-    agent = Softmax(Mnist(), 0, logits=Zero)
+    agent = Softmax(Mnist(), 0, logits=0.0)
     for i in range(3):
         print_traj(Mnist().trajectory(agent, i))
     for i in range(3):

@@ -3,7 +3,8 @@ import mandalka
 import numpy as np
 
 from test_setup import timer
-from agents import Cycle, Gauss, Softmax
+from agents import Cycle, Softmax
+from values import Gauss
 from worlds import World
 
 @mandalka.node
@@ -40,8 +41,8 @@ def test1():
 
 def test2():
     world = TestWorld(3)
-    world.trajectory(Gauss(world, 0), 0)
-    world.trajectory(Gauss(world, 1), 0)
+    world.trajectory(Gauss((2,), 0), 0)
+    world.trajectory(Gauss((2,), 1), 0)
 
 test1()
 test2()

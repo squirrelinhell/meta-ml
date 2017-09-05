@@ -8,6 +8,7 @@ tf.Session().run(tf.placeholder_with_default(0, shape=None))
 from test_setup import timer
 from worlds import *
 from agents import *
+from values import *
 assert timer() < 0.05
 
 def score(agent):
@@ -30,7 +31,7 @@ def test2():
         logits=BasicNet(
             hidden_layers=[32],
             batch_size=16,
-            params=GradAscent(n_steps=8, log_lr=0.9)
+            params=GradAscent(n_steps=8, log_lr=0.9, init=Gauss)
         )
     )
     RLAgent = WholeTrajectories(

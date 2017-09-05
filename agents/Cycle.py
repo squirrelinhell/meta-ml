@@ -8,8 +8,6 @@ from .base import Agent
 class Cycle(Agent):
     def __init__(self, world, seed, sequence):
         import numpy as np
-
-        assert seed == 0
         del seed
 
         sequence = np.array(sequence, dtype=np.float32)

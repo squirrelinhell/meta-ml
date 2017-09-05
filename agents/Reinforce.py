@@ -10,17 +10,11 @@ from worlds import World
 class Reinforce(Agent):
     def __init__(self, world, seed, policy):
         import numpy as np
+        seed = Agent.split_seed(seed)
 
-        rng = np.random.RandomState(seed)
-        del seed
+        policy = Agent.build(policy, ReinforceWorld(world), seed())
 
-        policy = Agent.build(
-            policy,
-            ReinforceWorld(world),
-            rng.randint(2**32)
-        )
-
-        agent = RandomChoice(world, rng.randint(2**32), p=policy)
+        agent = RandomChoice(world, seed(), p=policy)
         self.step = lambda s, o: agent.step(s, o)
 
 @mandalka.node
