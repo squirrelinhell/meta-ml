@@ -1,9 +1,13 @@
 
 import sys
 import numpy as np
+import tensorflow as tf
+tf.Session().run(tf.placeholder_with_default(0, shape=None))
+
+from test_setup import timer
 from worlds import *
 from agents import *
-assert test_timer() < 0.15
+assert timer() < 0.05
 
 def score(agent, n_episodes=1000):
     world = Accuracy(Mnist(test=True))
@@ -34,4 +38,4 @@ def test2():
 
 test1()
 test2()
-assert test_timer() < 6.0
+assert timer() < 5.0

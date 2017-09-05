@@ -9,18 +9,18 @@ class StatelessAgent(Agent):
 
         assert len(args) == 0
 
-        if get_action is not None:
+        if get_actions is not None:
+            def step(states, observations):
+                assert len(states) == len(observations)
+                return states, np.asarray(get_actions(observations))
+
+        elif get_action is not None:
             def step(states, observations):
                 assert len(states) == len(observations)
                 ret = np.array([get_action(o) for o in observations])
                 return states, ret
 
-        elif get_actions is not None:
-            def step(states, observations):
-                assert len(states) == len(observations)
-                return states, np.asarray(get_actions(observations))
-
         else:
-            raise ValueError("Specify get_action() or get_actions()")
+            raise ValueError("Specify get_actions() or get_action()")
 
         self.step = step

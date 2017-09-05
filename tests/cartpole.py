@@ -2,9 +2,13 @@
 import os
 import sys
 import numpy as np
+import tensorflow as tf
+tf.Session().run(tf.placeholder_with_default(0, shape=None))
+
+from test_setup import timer
 from worlds import *
 from agents import *
-assert test_timer() < 0.15
+assert timer() < 0.05
 
 def score(agent):
     world = Gym("CartPole-v1")
@@ -24,9 +28,9 @@ def test1():
 def test2():
     SupervisedAgent = Softmax(
         logits=BasicNet(
-            hidden_layers=[128],
+            hidden_layers=[32],
             batch_size=16,
-            params=GradAscent(n_steps=8, log_lr=0.8)
+            params=GradAscent(n_steps=8, log_lr=0.9)
         )
     )
     RLAgent = WholeTrajectories(
@@ -38,11 +42,11 @@ def test2():
     print("Policy network sanity check:", s >= 50.0)
 
     if "DEBUG" in os.environ:
-        test_timer()
+        timer()
         for _ in range(5):
             Gym("CartPole-v1").render(agent)
     else:
-        assert test_timer() < 9.0
+        assert timer() < 8.0
 
 test1()
 test2()

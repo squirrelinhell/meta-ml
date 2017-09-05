@@ -37,9 +37,8 @@ if [ "x$1" != x -a "x$2" = x ]; then
     [ -f "$TEST_FILE" ] || TEST_FILE="tests/$TEST_FILE"
     [ -f "$TEST_FILE" ] || TEST_FILE="$TEST_FILE.py"
     TGT_FILE="$TMPDIR/$(basename $TEST_FILE)"
-    echo "$DEBUG_SETUP" "$TEST_SETUP" > "$TMPDIR/setup.py"
-    echo "from setup import timer as test_timer" > "$TGT_FILE"
-    cat "$TEST_FILE" >> "$TGT_FILE"
+    echo "$DEBUG_SETUP" "$TEST_SETUP" > "$TMPDIR/test_setup.py"
+    cat "$TEST_FILE" > "$TGT_FILE" || exit 1
     exec python3 "$TGT_FILE"
 fi
 
@@ -68,9 +67,8 @@ for test in $TESTS; do
     [ -f "$test" ] || test="tests/$test"
     [ -f "$test" ] || test="$test.py"
 
-    echo "$TEST_SETUP" > "$TMPDIR/setup.py"
-    echo "from setup import timer as test_timer" > "$TMPDIR/run.py"
-    cat "$test" >> "$TMPDIR/run.py"  || exit 1
+    echo "$TEST_SETUP" > "$TMPDIR/test_setup.py"
+    cat "$test" > "$TMPDIR/run.py" || exit 1
     echo -n "Test: $test... "
 
     OUT_FILE="${test%.*}.out"
