@@ -8,13 +8,10 @@ from worlds import World
 @Agent.builder
 @mandalka.node
 class Reinforce(Agent):
-    def __init__(self, world, seed, policy):
+    def __init__(self, world, seed, agent):
         import numpy as np
-        seed = Agent.split_seed(seed)
 
-        policy = Agent.build(policy, ReinforceWorld(world), seed())
-
-        agent = RandomChoice(world, seed(), p=policy)
+        agent = Agent.build(agent, ReinforceWorld(world), seed)
         self.step = lambda s, o: agent.step(s, o)
 
 @mandalka.node
@@ -49,13 +46,7 @@ class ReinforceWorld(World):
             ))
 
         def trajectory_batch(agent, seed_batch):
-            rng = np.random.RandomState(seed_batch[0])
-            seed_batch[0] = rng.randint(2**32)
-
-            trajs = world.trajectory_batch(
-                RandomChoice(world, rng.randint(2**32), p=agent),
-                seed_batch
-            )
+            trajs = world.trajectory_batch(agent, seed_batch)
             return [process_traj(agent, t) for t in trajs]
 
         self.trajectory_batch = trajectory_batch

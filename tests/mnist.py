@@ -1,5 +1,5 @@
+
 import mandalka
-mandalka.config(lazy=False)
 import sys
 import numpy as np
 import tensorflow as tf

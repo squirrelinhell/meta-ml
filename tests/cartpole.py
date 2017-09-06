@@ -35,7 +35,9 @@ def test2():
         )
     )
     RLAgent = WholeTrajectories(
-        agent=Reinforce(policy=SupervisedAgent)
+        agent=RandomChoice(
+            p=Reinforce(agent=SupervisedAgent)
+        )
     )
     agent = RLAgent(Gym("CartPole-v1"), 123)
     s = score(agent)
@@ -47,7 +49,7 @@ def test2():
         for _ in range(5):
             Gym("CartPole-v1").render(agent)
     else:
-        assert timer() < 5.0
+        assert timer() < 4.0
 
 test1()
 test2()
