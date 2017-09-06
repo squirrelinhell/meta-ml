@@ -6,9 +6,9 @@ from agents import Agent
 
 @mandalka.node
 class CachedExperience(World):
-    def __init__(self, world, agents, seed,
+    def __init__(self, world, agents,
             test_each=0, max_batch=16):
-        seed = Agent.split_seed(seed)
+        import numpy as np
 
         if not isinstance(agents, list):
             agents = [agents]
@@ -18,27 +18,33 @@ class CachedExperience(World):
         self.get_reward_shape = lambda: world.rew_shape
 
         cache = []
-        def trajectory_batch(agent, seed_batch):
-            trajs = world.trajectory_batch(agent, seed_batch)
+        def trajectories(agent, n):
+            trajs = world.trajectories(agent, n)
             for t in trajs:
                 cache.append(t)
             return trajs
-        self.trajectory_batch = trajectory_batch
+        self.trajectories = trajectories
 
         def test(agent):
             mandalka.evaluate(agent)
             todo = test_each
             while todo >= 1:
                 batch = min(max_batch, todo)
-                trajectory_batch(agent, [seed() for _ in range(batch)])
+                trajectories(agent, n=batch)
                 todo -= batch
 
-        for a in agents:
-            test(Agent.build(a, self, seed()))
+        for i, a in enumerate(agents):
+            test(Agent.build(a, self, i))
 
-        def trajectory_batch(_, seed_batch):
-            return [cache[s % len(cache)] for s in seed_batch]
-        self.trajectory_batch = trajectory_batch
+        rng = np.random.RandomState()
+        def trajectories(_, n):
+            n = int(n)
+            assert n >= 1
+            idx = rng.choice(len(cache), size=n)
+            # TODO: this is unsafe, values could be modified outside
+            return [cache[i] for i in idx]
+
+        self.trajectories = trajectories
         self.num_trajectories = lambda: len(cache)
 
     def __len__(self):

@@ -8,7 +8,6 @@ from .base import Agent
 class Cycle(Agent):
     def __init__(self, world, seed, sequence):
         import numpy as np
-        del seed
 
         sequence = np.array(sequence, dtype=np.float32)
         assert sequence.shape[1:] == world.act_shape

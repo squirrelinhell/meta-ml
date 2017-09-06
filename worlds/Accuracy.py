@@ -20,12 +20,12 @@ class Accuracy(World):
             wanted = np.argmax(a + r)
             return o, a, [1.0] if answer == wanted else [0.0]
 
-        def trajectory_batch(agent, seed_batch):
-            trajs = world.trajectory_batch(agent, seed_batch)
+        def trajectories(agent, n):
+            trajs = world.trajectories(agent, n)
 
             return [
                 [process_exp(*e) for e in traj]
                 for traj in trajs
             ]
 
-        self.trajectory_batch = trajectory_batch
+        self.trajectories = trajectories

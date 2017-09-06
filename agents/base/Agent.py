@@ -9,11 +9,6 @@ class Agent:
 
     # Static methods
 
-    def split_seed(seed):
-        import numpy as np
-        rng = np.random.RandomState(seed)
-        return lambda: rng.randint(2**32)
-
     def build(agent, world, seed):
         if isinstance(agent, Agent):
             return agent
@@ -23,7 +18,7 @@ class Agent:
             return agent
         else:
             from values import Value
-            agent = Value.get_float(agent, world.act_shape, seed)
+            agent = Value.get_float(agent, world.act_shape)
             assert isinstance(agent, Agent)
             return agent
 
@@ -58,6 +53,12 @@ class AgentBuilder:
             cls = Agent.cls_by_name[self.cls_name]
             return cls(*args, **all_params)
 
+    # For convenience only
+
     def __getattr__(self, name):
         raise ValueError("Object '" + self.cls_name
             + "' has not yet been constructed")
+
+    def __add__(self, other):
+        from .. import AddValue
+        return AddValue(base=self, add=other)

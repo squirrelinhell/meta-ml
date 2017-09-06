@@ -6,10 +6,9 @@ from .base import Value, FloatValue
 @Value.builder
 @mandalka.node
 class Gauss(FloatValue):
-    def __init__(self, shape, seed):
+    def __init__(self, shape):
         import numpy as np
 
-        value = np.random.RandomState(seed).randn(*shape)
+        rng = np.random.RandomState()
 
-        value.setflags(write=False)
-        self.get = lambda: value
+        self.get = lambda: rng.randn(*shape)

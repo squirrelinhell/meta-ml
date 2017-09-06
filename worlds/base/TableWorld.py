@@ -26,9 +26,12 @@ class TableWorld(World):
         self.get_action_shape = lambda: labels[0].shape
         self.get_reward_shape = lambda: labels[0].shape
 
-        def trajectory_batch(agent, seed_batch):
-            # Assume seeds passed from the top are sensible
-            idx = [seed % len(inputs) for seed in seed_batch]
+        rng = np.random.RandomState()
+
+        def trajectories(agent, n):
+            n = int(n)
+            assert n >= 1
+            idx = rng.choice(len(inputs), size=n)
 
             # Request predictions from the outer agent
             _, pred_batch = agent.step([None] * len(idx), inputs[idx])
@@ -42,4 +45,4 @@ class TableWorld(World):
                 for i, pred in zip(idx, pred_batch)
             ]
 
-        self.trajectory_batch = trajectory_batch
+        self.trajectories = trajectories

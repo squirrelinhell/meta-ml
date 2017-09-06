@@ -3,24 +3,23 @@ import mandalka
 
 from .base import Agent, WrapperAgent
 from worlds import World
+from values import Value
 
 @Agent.builder
 @mandalka.node
-class Softmax(WrapperAgent):
-    def __init__(self, world, seed, logits):
-        import numpy as np
-
-        logits = Agent.build(logits, SoftmaxWorld(world), seed)
+class AddValue(WrapperAgent):
+    def __init__(self, world, seed, base, add):
+        add = Value.get_float(add, world.act_shape)
+        base = Agent.build(base, AddValueWorld(world, add), seed)
 
         def process_action(a):
-            a = np.exp(a - np.amax(a))
-            return a / a.sum()
+            return a + add.get()
 
-        super().__init__(logits, process_action=process_action)
+        super().__init__(base, process_action=process_action)
 
 @mandalka.node
-class SoftmaxWorld(World):
-    def __init__(self, world):
+class AddValueWorld(World):
+    def __init__(self, world, add):
         self.get_observation_shape = lambda: world.obs_shape
         self.get_action_shape = lambda: world.act_shape
         self.get_reward_shape = lambda: world.rew_shape
@@ -28,7 +27,7 @@ class SoftmaxWorld(World):
         def trajectories(agent, n):
             assert isinstance(agent, Agent)
             return world.trajectories(
-                Softmax(world, 0, logits=agent),
+                AddValue(world, 0, base=agent, add=add),
                 n
             )
 

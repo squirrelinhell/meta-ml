@@ -13,7 +13,7 @@ assert timer() < 0.05
 def score(agent, n_episodes=1000):
     world = Accuracy(Mnist(test=True))
     rew_sum = 0.0
-    for t in world.trajectory_batch(agent, range(n_episodes)):
+    for t in world.trajectories(agent, n_episodes):
         for o, a, r in t:
             rew_sum += np.mean(r)
     return rew_sum / n_episodes

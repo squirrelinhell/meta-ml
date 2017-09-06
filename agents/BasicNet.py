@@ -12,20 +12,17 @@ class BasicNet(StatelessAgent):
 
         # Wrap the original world with a meta world of parameters
         world = BasicNetParamsWorld(world, hidden_layers, batch_size)
-
         params = Agent.build(params, world, seed)
-        del seed
 
         # Get a single parameter vector for this instance
         _, (params,) = params.step([None], [None])
         params = np.asarray(params)
         params.setflags(write=False)
         assert params.shape == world.act_shape
+        self.get_parameters = lambda: params
 
         # Use the world's TF session to run computations
         super().__init__(get_actions=world.get_actions(params))
-
-        self.get_parameters = lambda: params
 
 @mandalka.node
 class BasicNetParamsWorld(World):
@@ -102,13 +99,10 @@ class BasicNetParamsWorld(World):
                 }
             )
 
-        def trajectory(outer_agent, seed):
-            assert isinstance(outer_agent, Agent)
-            rng = np.random.RandomState(seed)
-            del seed
+        rng = np.random.RandomState()
 
-            # Generate seeds for the whole batch
-            seed_batch = rng.randint(2**32, size=batch_size)
+        def trajectory(outer_agent):
+            assert isinstance(outer_agent, Agent)
 
             # Get parameters from the outer agent, and build
             # an agent to hold them
@@ -125,7 +119,7 @@ class BasicNetParamsWorld(World):
             # (assumed to be generated from the inner agent).
             # So learning only works if the underlying world
             # is strictly on-policy.
-            trajs = world.trajectory_batch(inner_agent, seed_batch)
+            trajs = world.trajectories(inner_agent, batch_size)
             all_obs = []
             all_rew = []
             for t in trajs:
@@ -145,7 +139,9 @@ class BasicNetParamsWorld(World):
 
             return [(None, params_value, grad)]
 
-        self.trajectory = trajectory
+        self.trajectories = (
+            lambda a, n: [trajectory(a) for _ in range(n)]
+        )
         self.get_actions = get_actions
 
 class Parameters:

@@ -16,7 +16,7 @@ world = Gym("CartPole-v1")
 def score(agent):
     rew_sum = 0.0
     for _ in range(2):
-        for t in world.trajectory_batch(agent, range(16)):
+        for t in world.trajectories(agent, n=16):
             for o, a, r in t:
                 rew_sum += np.mean(r)
     return rew_sum / 32.0

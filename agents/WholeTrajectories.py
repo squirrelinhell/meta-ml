@@ -29,9 +29,9 @@ class WholeTrajectoriesWorld(World):
         # Summing over trajectories needs to make sense
         assert world.rew_shape == (1,)
 
-        def trajectory_batch(agent, seed_batch):
+        def trajectories(agent, n):
             # Get trajectories from the underlying world
-            trajs = world.trajectory_batch(agent, seed_batch)
+            trajs = world.trajectories(agent, n)
 
             # Sum rewards from each trajectory
             traj_rewards = np.zeros(len(trajs), dtype=np.float32)
@@ -68,4 +68,4 @@ class WholeTrajectoriesWorld(World):
                 for i, traj in enumerate(trajs)
             ]
 
-        self.trajectory_batch = trajectory_batch
+        self.trajectories = trajectories

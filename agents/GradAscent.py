@@ -9,17 +9,14 @@ from values import Value
 @mandalka.node
 class GradAscent(StatelessAgent):
     def __init__(self, world, seed, log_lr, n_steps, init):
-        import numpy as np
-        seed = Agent.split_seed(seed)
-
-        init = Value.get_float(init, world.act_shape, seed())
+        init = Value.get_float(init, world.act_shape)
 
         # Wrap the original world with a meta world of learning rates
         world = GradAscentLRWorld(world, n_steps, init)
-        log_lr = Agent.build(log_lr, world, seed())
+        log_lr = Agent.build(log_lr, world, seed)
 
         # Run a single trajectory on GradAscentLRWorld
-        value = world.final_value(log_lr, seed())
+        value = world.final_value(log_lr)
         value.setflags(write=False)
         super().__init__(get_action=lambda _: value)
 
@@ -34,16 +31,17 @@ class GradAscentStep(StatelessAgent):
         _, (value,) = previous.step([None], [None])
 
         # Get gradient for current value
-        t = world.trajectory(previous, seed)
+        t = world.trajectories(previous, n=1)[0]
         grad = np.sum([r for o, a, r in t], axis=0)
         grad.setflags(write=False)
+        self.last_gradient = lambda: grad
 
         # Update value according to learning rate
-        value = value + np.power(10.0, log_lr) * grad
-        value.setflags(write=False)
+        if log_lr is not None:
+            value = value + np.power(10.0, log_lr) * grad
 
+        value.setflags(write=False)
         super().__init__(get_action=lambda _: value)
-        self.last_gradient = lambda: grad
 
 @mandalka.node
 class GradAscentLRWorld(World):
@@ -58,16 +56,18 @@ class GradAscentLRWorld(World):
             norm = np.sqrt(np.sum(np.square(v)))
             return -np.log10(max(0.0000000001, norm))
 
-        def agent_reward(value_agent, seed):
-            t = world.trajectory(value_agent, seed)
-            return reward(np.sum([r for o, a, r in t], axis=0))
+        rng = np.random.RandomState()
 
-        def trajectory(lr_agent, seed):
-            rng = np.random.RandomState(seed)
-            del seed
+        def trajectory(lr_agent):
+            # Get the first gradient
+            value_agent = GradAscentStep(
+                world,
+                rng.randint(2**32),
+                previous=init,
+                log_lr=None,
+            )
 
-            prev_reward = agent_reward(init, rng.randint(2**32))
-            value_agent = init
+            prev_reward = reward(value_agent.last_gradient())
             baseline = prev_reward
             traj = []
             state = [None]
@@ -86,7 +86,7 @@ class GradAscentLRWorld(World):
                     world,
                     rng.randint(2**32),
                     previous=value_agent,
-                    log_lr=round(float(log_lr[0] + baseline), 2),
+                    log_lr=float(log_lr[0] + baseline),
                 )
 
                 new_reward = reward(value_agent.last_gradient())
@@ -100,5 +100,7 @@ class GradAscentLRWorld(World):
             _, (value,) = value_agent.step([None], [None])
             return traj, value
 
-        self.trajectory = lambda a, s: trajectory(a, s)[0]
-        self.final_value = lambda a, s: trajectory(a, s)[1]
+        self.trajectories = (
+            lambda a, n: [trajectory(a)[0] for _ in range(n)]
+        )
+        self.final_value = lambda a: trajectory(a)[1]

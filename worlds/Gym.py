@@ -67,8 +67,8 @@ class Gym(World):
         else:
             raise ValueError("Unsupported action space")
 
-        def trajectory_batch(agent, seed_batch):
-            envs = [get_env() for _ in seed_batch]
+        def trajectories(agent, n):
+            envs = [get_env() for _ in range(n)]
             trajs = [[] for _ in envs]
 
             sta = [None for _ in envs]
@@ -123,5 +123,5 @@ class Gym(World):
 
             return_env(env)
 
-        self.trajectory_batch = trajectory_batch
+        self.trajectories = trajectories
         self.render = render

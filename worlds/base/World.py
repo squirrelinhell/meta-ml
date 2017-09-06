@@ -9,10 +9,9 @@ class World:
     def get_reward_shape(self): # -> {tuple of int}
         raise NotImplementedError
 
-    def trajectory(self, agent, seed): # -> list of (obs, act, reward)
-        return self.trajectory_batch(agent, [seed])[0]
-
-    def trajectory_batch(self, agent, seed_batch): # -> list of traj.
+    def trajectories(self, agent, n):
+        # returns a list of n trajectories, where each trajectory
+        # is a list of tuples (observation, action, reward)
         raise NotImplementedError
 
     # For convenience only

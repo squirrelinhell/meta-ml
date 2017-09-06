@@ -9,8 +9,6 @@ from worlds import World
 @mandalka.node
 class Reinforce(Agent):
     def __init__(self, world, seed, agent):
-        import numpy as np
-
         agent = Agent.build(agent, ReinforceWorld(world), seed)
         self.step = lambda s, o: agent.step(s, o)
 
@@ -45,8 +43,8 @@ class ReinforceWorld(World):
                 ((real_action - agent_action).T * rew.T).T
             ))
 
-        def trajectory_batch(agent, seed_batch):
-            trajs = world.trajectory_batch(agent, seed_batch)
+        def trajectories(agent, n):
+            trajs = world.trajectories(agent, n)
             return [process_traj(agent, t) for t in trajs]
 
-        self.trajectory_batch = trajectory_batch
+        self.trajectories = trajectories

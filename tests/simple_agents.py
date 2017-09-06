@@ -13,7 +13,7 @@ class TestWorld(World):
         self.get_action_shape = lambda: (2,)
         self.get_reward_shape = lambda: (1,)
 
-        def trajectory(agent, seed):
+        def trajectory(agent):
             sta = [None]
             traj = []
             for _ in range(steps):
@@ -22,9 +22,11 @@ class TestWorld(World):
                 print(act[0])
             return traj
 
-        self.trajectory = trajectory
+        self.trajectories = (
+            lambda agent, n: [trajectory(agent) for _ in range(n)]
+        )
 
-def test1():
+def test():
     world = TestWorld()
     agent = Softmax(
         world,
@@ -37,13 +39,7 @@ def test1():
             ]
         )
     )
-    world.trajectory(agent, 0)
+    world.trajectories(agent, n=2)
 
-def test2():
-    world = TestWorld(3)
-    world.trajectory(Gauss((2,), 0), 0)
-    world.trajectory(Gauss((2,), 1), 0)
-
-test1()
-test2()
-assert timer() < 0.15
+test()
+assert timer() < 0.02
