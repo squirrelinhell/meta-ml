@@ -11,8 +11,9 @@ from agents import *
 from values import *
 assert timer() < 0.05
 
+world = Gym("CartPole-v1")
+
 def score(agent):
-    world = Gym("CartPole-v1")
     rew_sum = 0.0
     for _ in range(2):
         for t in world.trajectory_batch(agent, range(16)):
@@ -21,7 +22,7 @@ def score(agent):
     return rew_sum / 32.0
 
 def test1():
-    agent = RandomChoice(Gym("CartPole-v1"), 123, p=0.5)
+    agent = RandomChoice(world, 123, p=0.5)
     s = score(agent)
     sys.stderr.write("Reward/episode (random agent): %.5f\n" % s)
     print("Random agent sanity check:", s >= 15.0, s <= 30.0)
@@ -39,7 +40,7 @@ def test2():
             p=Reinforce(agent=SupervisedAgent)
         )
     )
-    agent = RLAgent(Gym("CartPole-v1"), 123)
+    agent = RLAgent(world, 123)
     s = score(agent)
     sys.stderr.write("Reward/episode (policy network): %.5f\n" % s)
     print("Policy network sanity check:", s >= 50.0)
@@ -47,7 +48,7 @@ def test2():
     if "DEBUG" in os.environ:
         timer()
         for _ in range(5):
-            Gym("CartPole-v1").render(agent)
+            world.render(agent)
     else:
         assert timer() < 4.0
 

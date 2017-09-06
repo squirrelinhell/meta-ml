@@ -5,7 +5,7 @@ from .base import World
 
 @mandalka.node
 class Gym(World):
-    def __init__(self, env_name):
+    def __init__(self, env_name, max_steps=-1):
         import gym
         import gym.spaces
         import numpy as np
@@ -46,9 +46,14 @@ class Gym(World):
 
         if isinstance(act_space, gym.spaces.Box):
             self.get_action_shape = lambda: act_space.shape
+            low = np.asarray(act_space.low)
+            diff = act_space.high - low
+            assert (diff > 0.001).all()
+            assert (diff < 1000).all()
             def process_action(a):
                 assert a.shape == act_space.shape
-                return a
+                a = np.abs((a - 1.0) % 4.0 - 2.0) * 0.5
+                return diff * a + low
 
         elif isinstance(act_space, gym.spaces.Discrete):
             self.get_action_shape = lambda: (act_space.n,)
@@ -71,6 +76,10 @@ class Gym(World):
             obs_idx = range(len(envs))
 
             while len(obs) >= 1:
+                # Interrupt if any episode lasts longer than max_steps
+                if len(trajs[obs_idx[0]]) == max_steps:
+                    break
+
                 n_active = len(obs)
 
                 # Ask the outer agent to process observations
@@ -83,15 +92,15 @@ class Gym(World):
                 for s, o, a, i in zip(sta, obs, act, obs_idx):
                     next_o, r, done, _ = envs[i].step(process_action(a))
                     trajs[i].append((o, a, r))
-                    if done:
-                        return_env(envs[i])
-                        envs[i] = None
-                    else:
+                    if not done:
                         next_sta.append(s)
                         next_obs.append(process_obs(next_o))
                         next_obs_idx.append(i)
 
                 sta, obs, obs_idx = next_sta, next_obs, next_obs_idx
+
+            for e in envs:
+                return_env(e)
 
             return trajs
 
@@ -102,10 +111,15 @@ class Gym(World):
             sta = [None]
             obs = process_obs(env.reset())
             done = False
+            n_steps = 0
             while not done:
                 sta, act = agent.step(sta, [obs])
                 obs, rew, done, _ = env.step(process_action(act[0]))
                 env.render()
+
+                n_steps += 1
+                if n_steps == max_steps:
+                    break
 
             return_env(env)
 

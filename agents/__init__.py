@@ -8,3 +8,4 @@ from .RandomChoice import RandomChoice
 from .Reinforce import Reinforce
 from .Softmax import Softmax
 from .WholeTrajectories import WholeTrajectories
+from .WithNoise import WithNoise
