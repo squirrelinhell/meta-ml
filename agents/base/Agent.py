@@ -5,6 +5,9 @@ class Agent:
     # def __init__(self, world, seed, ...)
 
     def step(self, states, observations): # -> (states, actions)
+        # The first dimension of input and output arrays describes
+        # a batch of separate agents, each with a persistent state
+        # State "None" is a request to initialize a new agent
         raise NotImplementedError
 
     # Static methods

@@ -10,8 +10,10 @@ class World:
         raise NotImplementedError
 
     def trajectories(self, agent, n):
-        # returns a list of n trajectories, where each trajectory
+        # Returns a list of n trajectories, where each trajectory
         # is a list of tuples (observation, action, reward)
+        # IMPORTANT: each trajectory is assumed to be separately
+        # randomized (in every call of this method)
         raise NotImplementedError
 
     # For convenience only
