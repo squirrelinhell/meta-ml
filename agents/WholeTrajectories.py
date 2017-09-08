@@ -38,8 +38,9 @@ class WholeTrajectoriesWorld(World):
             traj_lengths = np.zeros(len(trajs), dtype=np.int32)
             for i, traj in enumerate(trajs):
                 rews = np.array([r for o, a, r in traj])
-                assert len(rews.shape) == 1
-                assert len(rews) >= 1
+                assert len(rews.shape) == 2
+                rews = rews.reshape(-1)
+                assert len(rews) == len(traj)
 
                 traj_rewards[i] = np.sum(rews)
                 traj_lengths[i] = len(rews)
